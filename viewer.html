@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Lumistar - Viewer Mode</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="newspaper-container">
+    <div class="top-info">
+        <span>Mohammadpur,Dhaka-1207</span>
+        <span onclick="logout()" style="cursor:pointer; color:red;">[ LOGOUT ]</span>
+        <span>ESTD. 2026</span>
+    </div>
+
+    <header class="masthead">
+        <h1 style="text-align: center; font-size: 3.5rem; margin: 10px 0;">THE LUMISTAR</h1>
+        <div class="date-line" id="liveDateDisplay">VOL. XCIV... No. 31,102 — LOADING...</div>
+    </header>
+
+    <main id="newsFeed">
+        </main>
+
+    <footer style="margin-top: 50px; text-align: center; border-top: 1px solid #000; padding-top: 20px;">
+        <div style="font-size: 0.8rem; margin-bottom: 10px;">
+            ABOUT US | CONTACT | PRIVACY POLICY | ARCHIVE
+        </div>
+        <h2 style="font-family: serif; margin: 0; font-size: 1.8rem;">The Lumistar</h2>
+        <p style="font-size: 0.75rem; margin: 5px 0;">© 2026 THE LUMISTAR MEDIA GROUP. ALL RIGHTS RESERVED.</p>
+        <p style="font-style: italic; font-size: 0.8rem;">"Truth, Transparency, and the Digital Age"</p>
+        <div style="letter-spacing: 5px; font-size: 0.9rem; margin-top: 10px;">f | t | i | y</div>
+    </footer>
+</div>
+
+<div class="bottom-ui">
+    <div id="clock1" class="green-clock">--- CONNECTING ---</div>
+    <div class="breaking-news-container">
+        <div class="breaking-label">BREAKING NEWS</div>
+        <marquee behavior="scroll" direction="left">
+            *** THE LUMISTAR: আহামরি সব আজাইরা News এখন আপনার চোখের সামনে  ***
+        </marquee>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script src="auth.js"></script>
+<script src="script.js"></script>
+
+<script>
+    // ডেট ডিসপ্লে ঠিক রাখার কোড
+    const now = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateElem = document.getElementById('liveDateDisplay');
+    if(dateElem) dateElem.innerText = `VOL. XCIV... No. 31,102 — ${now.toLocaleDateString('en-US', options).toUpperCase()}`;
+
+    // --- এই লাইনটি নতুন যোগ করুন ---
+    // এটি script.js থেকে ব্রেকিং নিউজের লজিকটি চালু করবে
+    if (typeof listenBreaking === "function") {
+        listenBreaking();
+    }
+</script>
+
+
+</body>
+</html>

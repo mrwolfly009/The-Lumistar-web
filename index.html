@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>The Lumistar - Redirecting...</title>
+</head>
+<body>
+  
+    <script>
+    const user = localStorage.getItem('currentUser');
+    const role = localStorage.getItem('userRole');
+
+    if (user && role) {
+        window.location.replace(role === 'journalist' ? "journalist.html" : "viewer.html");
+    } else {
+        window.location.replace("login.html");
+    }
+    </script>
+
+</body>
+</html>

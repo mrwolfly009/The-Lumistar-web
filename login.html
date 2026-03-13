@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Lumistar - Login Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .login-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            padding: 20px;
+        }
+        .login-box {
+            width: 100%;
+            max-width: 400px;
+            background: #e8e4d9;
+            border: 1px solid #000;
+            padding: 25px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-wrapper">
+    <div class="login-box">
+        <header class="masthead">
+            <h2 style="text-align:center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-top: 0;">LUMISTAR ACCESS</h2>
+        </header>
+
+        <p style="text-align:center; font-style: italic; font-size: 0.9rem;">Please identify yourself to enter the portal.</p>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="font-weight:bold; display:block; margin-bottom:5px;">Name</label>
+            <input type="text" id="uName" placeholder="Enter your name" style="width:100%; padding:10px; border:1px solid #000; box-sizing:border-box;">
+        </div>
+
+        <div id="passArea" style="display:none; margin-bottom: 15px;">
+            <label style="font-weight:bold; display:block; margin-bottom:5px;">Password (Journalist Only)</label>
+            <input type="password" id="uPass" placeholder="••••••••" style="width:100%; padding:10px; border:1px solid #000; box-sizing:border-box;">
+        </div>
+
+        <div style="border: 1px dashed #000; padding: 12px; margin-bottom: 20px; text-align:center; background: rgba(0,0,0,0.05);">
+            <label style="cursor:pointer;">
+                <input type="radio" name="role" id="vRadio" checked onclick="togglePass(false)"> Viewer
+            </label>
+            <label style="cursor:pointer; margin-left:25px;">
+                <input type="radio" name="role" id="jRadio" onclick="togglePass(true)"> Journalist
+            </label>
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-direction: column; margin-top: 10px;">
+    <div style="display: flex; gap: 10px;">
+        <button onclick="handleAuth('login')" style="flex:1; background:#000; color:#fff; padding:12px; cursor:pointer; font-weight:bold; border:none; text-transform:uppercase;">LOGIN</button>
+        <button onclick="handleAuth('register')" style="flex:1; background:#fff; color:#000; border:1px solid #000; padding:12px; cursor:pointer; font-weight:bold; text-transform:uppercase;">REGISTER</button>
+    </div>
+    
+    <button onclick="exitPortal()" style="width:100%; background:transparent; color:red; border:1px solid red; padding:8px; cursor:pointer; font-size: 0.8rem; font-weight:bold; text-transform:uppercase;">
+        EXIT
+    </button>
+</div>
+
+        
+        <p style="text-align:center; font-size: 0.7rem; margin-top: 15px; color: #555;">
+            * Journalist access is restricted to authorized personnel only.
+        </p>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDqU6HHGHAO3nrEwMQ0WEMMCtQeikMhgUw",
+    authDomain: "the-lumistar-web.firebaseapp.com",
+    databaseURL: "https://the-lumistar-web-default-rtdb.firebaseio.com/",
+    projectId: "the-lumistar-web",
+    storageBucket: "the-lumistar-web.firebasestorage.app",
+    messagingSenderId: "343793935025",
+    appId: "1:343793935025:web:fd92cd889c72f8ebb17890"
+  };
+  
+  if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+  }
+</script>
+
+<script src="auth.js"></script>
+
+<script>
+    function togglePass(show) {
+        const passArea = document.getElementById('passArea');
+        if (passArea) passArea.style.display = show ? 'block' : 'none';
+    }
+    function exitPortal() {
+    if (confirm("Are you sure you want to exit The Lumistar?")) {
+
+        window.location.href = "https://www.google.com/";
+    }
+}
+
+</script>
+</body>
+</html>

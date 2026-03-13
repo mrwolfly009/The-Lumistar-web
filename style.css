@@ -1,0 +1,160 @@
+/* 1. Global Texture - Light & Elegant */
+body {
+    background-color: #f2e9d2;
+    /* Texture-ke halka ebong choto kora holo jate chokhe na lage */
+    background-image: radial-gradient(#d1c5a5 0.5px, transparent 0.5px);
+    background-size: 3px 3px; 
+    color: #1a1a1a;
+    font-family: 'Times New Roman', Times, serif;
+    margin: 0;
+    padding: 0;
+    padding-bottom: 120px;
+}
+
+/* 2. Container Fix - Responsive width */
+.newspaper-container {
+    width: 95%; /* Screen er baire jabe na */
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 15px;
+    border: 1px solid #000;
+    background: transparent; 
+    box-sizing: border-box;
+}
+
+/* 3. Header Masthead - Scaling Fix */
+.masthead h1 {
+    text-align: center;
+    font-size: clamp(2.5rem, 10vw, 4.5rem); /* Screen onujayi scale hobe */
+    margin: 10px 0;
+    font-weight: 900;
+    letter-spacing: -1px;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.top-info {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #000;
+    padding: 5px 0;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.date-line {
+    text-align: center;
+    border-top: 1px solid #000;
+    border-bottom: 4px double #000;
+    padding: 5px 0;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+}
+
+/* 4. Post Box - Clean & Minimalist (No Shadow) */
+.post-box {
+    background-color: #e8e4d9; 
+    padding: 20px;
+    border: 1px solid #000; /* Simple border, no shadow */
+    margin: 20px 0;
+}
+
+.post-box h2 {
+    margin: 0 0 15px 0;
+    font-size: 1.3rem;
+    border-bottom: 1px solid #000;
+    padding-bottom: 5px;
+    letter-spacing: 1px;
+}
+
+.post-box input, .post-box textarea {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #999;
+    background: #fff;
+    box-sizing: border-box;
+    font-family: serif;
+}
+
+.publish-btn {
+    background: #000;
+    color: #fff;
+    padding: 8px 20px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* 5. Fixed Bottom Section */
+.bottom-ui {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 10000;
+}
+
+.green-clock {
+    background: #000;
+    color: #00ff00;
+    text-align: center;
+    padding: 4px;
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+.breaking-news-container {
+    background: #ff0000;
+    color: #fff;
+    display: flex;
+    height: 35px;
+    align-items: center;
+}
+
+.breaking-label {
+    background: #000;
+    padding: 0 10px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+}
+/* Newspaper image-ke black and white korar jonno */
+img {
+    filter: grayscale(100%);
+    transition: 0.3s; /* Mouse nile jodi color korte chao, eita thakbe */
+}
+
+/* Mouse nile color hobe (Optional, na chaile bad dite paro) */
+img:hover {
+    filter: grayscale(0%);
+}
+img { filter: grayscale(100%); border: 1px solid #000; }
+
+/* Drop Cap Design for 90s Newspaper Look */
+.drop-cap {
+    float: left;
+    font-size: 3.5rem;
+    line-height: 0.8;
+    margin: 5px 10px 0 0;
+    font-weight: bold;
+    font-family: serif;
+    color: #000;
+}
+
+/* News article spacing fix */
+.news-item {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #000;
+    overflow: hidden; /* Floating element-ke container-er bhitore rakhar jonno */
+}
+
+.news-item p {
+    text-align: justify;
+    line-height: 1.6;
+    margin-top: 10px;
+}

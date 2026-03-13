@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Lumistar - Journalist</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="newspaper-container">
+    <div class="top-info">
+        <span>Mohammadpur,Dhaka-1207</span>
+        <span onclick="logout()" style="cursor:pointer; color:red;">[ LOGOUT ]</span>
+        <span>ESTD. 2026</span>
+    </div>
+
+    <header class="masthead">
+        <h1 style="text-align: center; font-size: 3.5rem; margin: 10px 0;">THE LUMISTAR</h1>
+        <div class="date-line" id="liveDateDisplay">VOL. XCIV... No. 31,102 — LOADING...</div>
+    </header>
+    
+<div class="post-box" style="border-bottom: 3px double #000; margin-bottom: 20px; padding-bottom: 15px;">
+    <h3 style="margin-top: 0; font-size: 0.9rem; color: red;">🔴 UPDATE BREAKING NEWS</h3>
+    <div style="display: flex; gap: 5px;">
+
+ <input type="text" id="breakingInput" placeholder="Breaking news ekhane likho..." style="
+    flex: 1; 
+    padding: 5px 8px; 
+    border: 1px solid #000; 
+    height: 32px; /* বাটনের উচ্চতার সাথে মিল রাখা হয়েছে */
+    box-sizing: border-box;
+">
+
+ <button onclick="updateBreaking()" style="
+    background: red; 
+    color: #fff; 
+    border: none; 
+    padding: 2px 10px; 
+    /* এই মানটি কমানো হয়েছে বাটন পাতলা করার জন্য */
+    cursor: pointer; 
+    font-weight: bold; 1px solid #000;
+    font-size: 0.7rem; 
+    /* ফন্ট সাইজ সামান্য কমানো হয়েছে */
+    height: 32px; 
+    /* ইনপুট বক্সের সমান উচ্চতা নিশ্চিত করতে */
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+">UPDATE</button>
+
+    </div>
+</div>
+
+<div class="post-box">
+    <h2>JOURNALIST PANEL</h2>
+    <input type="text" id="tInput" placeholder="Headline likho...">
+    
+    <input type="text" id="iInput" placeholder="Image URL (Link) dao...">
+    
+    <p style="font-size: 0.8rem; margin: 5px 0 2px 0;">Or upload from gallery:</p>
+<div style="display: flex; align-items: center; gap: 5px;">
+    <input type="file" id="fileInput" accept="image/*" style="margin-bottom:0;">
+    <button id="cancelImg" onclick="clearFile()" style="display:none; background:red; color:white; border:none; cursor:pointer; padding:5px 10px; font-weight:bold;">【X】</button>
+</div>
+
+    <textarea id="cInput" rows="3" placeholder="News-er details ekhane likho..."></textarea>
+    <button onclick="publish()" class="publish-btn">PUBLISH NEWS</button>
+</div>
+
+    <main id="newsFeed"></main>
+        <footer style="margin-top: 50px; text-align: center; border-top: 1px solid #000; padding-top: 20px;">
+        <div style="font-size: 0.8rem; margin-bottom: 10px;">
+            ABOUT US | CONTACT | PRIVACY POLICY | ARCHIVE
+        </div>
+        <h2 style="font-family: serif; margin: 0; font-size: 1.8rem;">The Lumistar</h2>
+        <p style="font-size: 0.75rem; margin: 5px 0;">© 2026 THE LUMISTAR MEDIA GROUP. ALL RIGHTS RESERVED.</p>
+        <p style="font-style: italic; font-size: 0.8rem;">"Truth, Transparency, and the Digital Age"</p>
+        <div style="letter-spacing: 5px; font-size: 0.9rem; margin-top: 10px;">f | t | i | y</div>
+    </footer>
+
+</div>
+
+<div class="bottom-ui">
+    <div id="clock1" class="green-clock">--- CONNECTING ---</div>
+    <div class="breaking-news-container">
+        <div class="breaking-label">BREAKING NEWS</div>
+        <marquee behavior="scroll" direction="left">
+            *** THE LUMISTAR: আহামরি সব আজাইরা News এখন আপনার চোখের সামনে  ***
+        </marquee>
+    </div> 
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script src="auth.js"></script>
+<script src="script.js"></script>
+
+<script>
+    const today = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateDisplay = document.getElementById('liveDateDisplay');
+    if (dateDisplay) {
+        dateDisplay.innerText = `VOL. XCIV... No. 31,102 — ${today.toLocaleDateString('en-US', options).toUpperCase()}`;
+    }
+</script>
+</body>
+</html>
