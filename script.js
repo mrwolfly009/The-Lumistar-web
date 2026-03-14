@@ -14,13 +14,6 @@ if (!firebase.apps.length) {
 }
 const db = firebase.database();
 
-// ১. পেজ লোড হলে যা হবে
-window.onload = function() {
-    console.log("App Started...");
-    render();
-    setInterval(updateClocks, 1000);
-};
-
 // ২. ঘড়ি আপডেট
 function updateClocks() {
     const clock1 = document.getElementById('clock1');
@@ -35,13 +28,17 @@ function updateClocks() {
 
 // ৩. পাবলিশ ফাংশন
 // ছবির প্রিভিউ এবং ক্যান্সেল করার জন্য গ্লোবাল লজিক
-document.getElementById('fileInput').onchange = function() {
-    const file = this.files[0];
-    if (file) {
-        // ফাইল সিলেক্ট হলে ক্যান্সেল বাটন দেখাবে
-        document.getElementById('cancelImg').style.display = 'inline-block';
-    }
-};
+const fileInput = document.getElementById('fileInput');
+
+if (fileInput) {
+    fileInput.onchange = function() {
+        const file = this.files[0];
+        if (file) {
+            const cancelImg = document.getElementById('cancelImg');
+            if (cancelImg) cancelImg.style.display = 'inline-block';
+        }
+    };
+}
 
 function clearFile() {
     const fileInput = document.getElementById('fileInput');
@@ -220,6 +217,63 @@ window.addEventListener('load', listenBreaking);
 // ৩. উইন্ডো লোড হওয়ার সময় এই লিসেনার চালু করা
 const originalOnload = window.onload;
 window.onload = function() {
+    console.log("App Started...");
+    render();
+    setInterval(updateClocks, 1000);
     if (originalOnload) originalOnload();
     listenBreaking();
 };
+
+const myKey = "e9fa5ff4c995f29c349050bf3b4f3bc6"; // Tomar Dhaka key-ta eikhane boshalom
+const myCity = "Dhaka";
+
+async function getTheWeather() {
+    const tempElement = document.getElementById('temp');
+    const condElement = document.getElementById('condition');
+    const iconFont = document.getElementById('weather-icon-font'); // ID ta check koro
+
+    if (!tempElement) return;
+
+    try {
+        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${myCity}&appid=${myKey}&units=metric`);
+        
+if (res.ok) {
+            const weatherData = await res.json();
+            console.log("Weather data received successfully!");
+
+            // Temperature ar Condition update
+            tempElement.innerText = Math.round(weatherData.main.temp) + "°C";
+            condElement.innerText = weatherData.weather[0].main.toUpperCase();
+
+            // PENCIL ART ICON LOGIC (Eikhane thikmoto boshao)
+            const conditionCode = weatherData.weather[0].icon;
+            let iconClass = "fa-solid fa-cloud"; // Default
+
+            if (conditionCode.startsWith('01')) iconClass = "fa-solid fa-sun"; 
+            if (conditionCode.startsWith('02')) iconClass = "fa-solid fa-cloud-sun"; 
+            if (conditionCode.startsWith('03')) iconClass = "fa-solid fa-cloud"; 
+            if (conditionCode.startsWith('04')) iconClass = "fa-solid fa-cloud"; 
+            if (conditionCode.startsWith('09')) iconClass = "fa-solid fa-cloud-showers-heavy"; 
+            if (conditionCode.startsWith('10')) iconClass = "fa-solid fa-cloud-sun-rain"; 
+            if (conditionCode.startsWith('11')) iconClass = "fa-solid fa-cloud-bolt"; 
+            if (conditionCode.startsWith('13')) iconClass = "fa-solid fa-snowflake"; 
+            if (conditionCode.startsWith('50')) iconClass = "fa-solid fa-smog"; 
+
+if (iconFont) {
+    iconFont.className = iconClass;
+    iconFont.style.display = "inline-flex";
+    
+    // Icon-ke ekdom black korar jonno nichei color set koro
+    iconFont.style.color = "#000"; 
+    
+    // Agger filter gulo muche dao jate shudhu black thake
+    iconFont.style.filter = "none"; 
+}
+
+}
+    } catch (err) {
+        console.log("Weather error:", err);
+    }
+}
+
+getTheWeather();
