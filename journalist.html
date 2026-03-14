@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Lumistar - Journalist</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
 </head>
 <body>
 
@@ -14,6 +16,12 @@
         <span onclick="logout()" style="cursor:pointer; color:red;">[ LOGOUT ]</span>
         <span>ESTD. 2026</span>
     </div>
+
+<div id="weather-widget">
+    <span id="temp">--°C</span>
+    <i id="weather-icon-font" class="fa-solid fa-cloud"></i> 
+    <span id="condition">Loading...</span>
+</div>
 
     <header class="masthead">
         <h1 style="text-align: center; font-size: 3.5rem; margin: 10px 0;">THE LUMISTAR</h1>
@@ -69,7 +77,28 @@
     <button onclick="publish()" class="publish-btn">PUBLISH NEWS</button>
 </div>
 
-    <main id="newsFeed"></main>
+    <main id="newsFeed">
+    <div class="skeleton-card journalist-mode">
+        <div class="skeleton-image"></div>
+        <div class="skeleton-text title"></div>
+        <div class="skeleton-text desc"></div>
+        <div class="skeleton-buttons">
+            <div class="btn-placeholder"></div>
+            <div class="btn-placeholder"></div>
+        </div>
+    </div>
+        <div class="skeleton-card">
+        <div class="skeleton-image"></div>
+        <div class="skeleton-text title"></div>
+        <div class="skeleton-text desc"></div>
+    </div>
+    <div class="skeleton-card">
+        <div class="skeleton-image"></div>
+        <div class="skeleton-text title"></div>
+        <div class="skeleton-text desc"></div>
+    </div>
+    </main>
+
         <footer style="margin-top: 50px; text-align: center; border-top: 1px solid #000; padding-top: 20px;">
         <div style="font-size: 0.8rem; margin-bottom: 10px;">
             ABOUT US | CONTACT | PRIVACY POLICY | ARCHIVE
