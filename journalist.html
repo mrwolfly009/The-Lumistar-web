@@ -125,6 +125,17 @@
 <script src="script.js"></script>
 
 <script>
+    // নিরাপত্তা চেক: ইউজার লগইন করা কি না এবং তার রোল 'journalist' কি না তা যাচাই করা
+    const currentUser = localStorage.getItem('currentUser');
+    const userRole = localStorage.getItem('userRole');
+
+    if (!currentUser || userRole !== 'journalist') {
+        alert("❌ Access Denied! Apnar journalist access nei.");
+        window.location.replace("login.html"); // ভিউয়ার হলে বা লগইন না থাকলে সরাসরি লগইন পেজে পাঠিয়ে দেবে
+    }
+</script>
+  
+<script>
     const today = new Date();
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const dateDisplay = document.getElementById('liveDateDisplay');
