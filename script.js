@@ -230,50 +230,44 @@ const myCity = "Dhaka";
 async function getTheWeather() {
     const tempElement = document.getElementById('temp');
     const condElement = document.getElementById('condition');
-    const iconFont = document.getElementById('weather-icon-font'); // ID ta check koro
+    const iconFont = document.getElementById('weather-icon-font');
 
     if (!tempElement) return;
 
     try {
         const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${myCity}&appid=${myKey}&units=metric`);
         
-if (res.ok) {
+        if (res.ok) {
             const weatherData = await res.json();
-            console.log("Weather data received successfully!");
-
-            // Temperature ar Condition update
             tempElement.innerText = Math.round(weatherData.main.temp) + "°C";
             condElement.innerText = weatherData.weather[0].main.toUpperCase();
 
-            // PENCIL ART ICON LOGIC (Eikhane thikmoto boshao)
-            const conditionCode = weatherData.weather[0].icon;
-            let iconClass = "fa-solid fa-cloud"; // Default
+            const conditionCode = weatherData.weather[0].icon; 
+            const isNight = conditionCode.endsWith('n'); // 'n' thakle raat
+            let iconClass = "fa-solid fa-cloud"; 
 
-            if (conditionCode.startsWith('01')) iconClass = "fa-solid fa-sun"; 
-            if (conditionCode.startsWith('02')) iconClass = "fa-solid fa-cloud-sun"; 
-            if (conditionCode.startsWith('03')) iconClass = "fa-solid fa-cloud"; 
-            if (conditionCode.startsWith('04')) iconClass = "fa-solid fa-cloud"; 
-            if (conditionCode.startsWith('09')) iconClass = "fa-solid fa-cloud-showers-heavy"; 
-            if (conditionCode.startsWith('10')) iconClass = "fa-solid fa-cloud-sun-rain"; 
-            if (conditionCode.startsWith('11')) iconClass = "fa-solid fa-cloud-bolt"; 
-            if (conditionCode.startsWith('13')) iconClass = "fa-solid fa-snowflake"; 
-            if (conditionCode.startsWith('50')) iconClass = "fa-solid fa-smog"; 
-
-if (iconFont) {
-    iconFont.className = iconClass;
-    iconFont.style.display = "inline-flex";
-    
-    // Icon-ke ekdom black korar jonno nichei color set koro
-    iconFont.style.color = "#000"; 
-    
-    // Agger filter gulo muche dao jate shudhu black thake
-    iconFont.style.filter = "none"; 
-}
-
-}
+            // Dynamic logic for Day/Night
+            if (conditionCode.startsWith('01')) {
+                iconClass = isNight ? "fa-solid fa-moon" : "fa-solid fa-sun";
+            } else if (conditionCode.startsWith('02')) {
+                iconClass = isNight ? "fa-solid fa-cloud-moon" : "fa-solid fa-cloud-sun";
+            } else if (conditionCode.startsWith('03') || conditionCode.startsWith('04')) {
+                iconClass = "fa-solid fa-cloud";
+            } else if (conditionCode.startsWith('09') || conditionCode.startsWith('10')) {
+                iconClass = isNight ? "fa-solid fa-cloud-moon-rain" : "fa-solid fa-cloud-sun-rain";
+            } else if (conditionCode.startsWith('11')) {
+                iconClass = "fa-solid fa-cloud-bolt";
+            } 
+            
+            if (iconFont) {
+                iconFont.className = iconClass;
+                iconFont.style.display = "inline-flex";
+                iconFont.style.color = "#000"; 
+                iconFont.style.filter = "none"; 
+            }
+        }
     } catch (err) {
         console.log("Weather error:", err);
     }
 }
-
 getTheWeather();
