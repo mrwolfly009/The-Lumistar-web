@@ -13,8 +13,12 @@ if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.database();
+const currentUser = localStorage.getItem('currentUser') || 'Anonymous';
 
-// ২. ঘড়ি আপডেট
+// Global memory cache to store fixed order between reloads
+let sortedNewsKeys = []; 
+
+// 1. Clock Update
 function updateClocks() {
     const clock1 = document.getElementById('clock1');
     if (!clock1) return;
@@ -26,8 +30,7 @@ function updateClocks() {
     clock1.innerText = timeString;
 }
 
-// ৩. পাবলিশ ফাংশন
-// ছবির প্রিভিউ এবং ক্যান্সেল করার জন্য গ্লোবাল লজিক
+// 2. Publish function & Image handling
 const fileInput = document.getElementById('fileInput');
 
 if (fileInput) {
@@ -57,7 +60,6 @@ function publish() {
         return;
     }
 
-    // ছবি যদি গ্যালারি থেকে থাকে
     if (fileInput.files && fileInput.files[0]) {
         const file = fileInput.files[0];
         const reader = new FileReader();
@@ -66,7 +68,6 @@ function publish() {
             const img = new Image();
             img.src = e.target.result;
             img.onload = function() {
-                // ছবি বড় হলে রিসাইজ করা (Max Width 800px)
                 const canvas = document.createElement('canvas');
                 let width = img.width;
                 let height = img.height;
@@ -88,7 +89,6 @@ function publish() {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                // কোয়ালিটি ০.৭ করে ডেটাবেজে পাঠানো (সাইজ অনেক কমে যাবে)
                 const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
                 saveToFirebase(t, compressedBase64, c);
             };
@@ -111,38 +111,90 @@ function saveToFirebase(title, imgSource, content) {
         document.getElementById('tInput').value = "";
         document.getElementById('iInput').value = "";
         document.getElementById('cInput').value = "";
-        // fileInput variable-er bodole direct ID use koro
         const fInput = document.getElementById('fileInput');
         if(fInput) fInput.value = "";
     }).catch(err => console.error("Firebase Error:", err));
 }
 
-// ৪. রেন্ডার ফাংশন
+// 3. Main Render Function (Strict 24h & Reload-only Ranking)
 function render() {
     const feed = document.getElementById('newsFeed');
     if (!feed) return;
 
-    // Reliability বাড়াতে href.toLowerCase ব্যবহার করা হয়েছে
     const isJournalistPage = window.location.href.toLowerCase().indexOf('journalist') > -1;
-
-    console.log("Fetching news from Firebase...");
 
     db.ref('news_portal').on('value', (snapshot) => {
         const data = snapshot.val();
-        console.log("Data received:", data); // এই লাইনটি কনসোলে চেক করবেন
-        
-        const list = [];
-        for (let key in data) {
-            list.unshift({ id: key, ...data[key] });
-        }
-
-        feed.innerHTML = '';
-        if (list.length === 0) {
+        if (!data) {
             feed.innerHTML = '<p style="text-align:center; padding: 20px;">No news published yet.</p>';
+            sortedNewsKeys = [];
             return;
         }
 
-        list.forEach(item => {
+        const newsMap = {};
+        const currentList = [];
+
+        for (let key in data) {
+            const itemData = data[key];
+            
+            let upCount = 0;
+            let downCount = 0;
+            if (itemData.votes) {
+                Object.values(itemData.votes).forEach(v => {
+                    if (v === 'up') upCount++;
+                    if (v === 'down') downCount++;
+                });
+            }
+
+            const newsItem = { 
+                id: key, 
+                ...itemData,
+                upVotes: upCount,
+                downVotes: downCount
+            };
+
+            newsMap[key] = newsItem;
+            currentList.push(newsItem);
+        }
+
+        // --- SORTING LOGIC (Only runs on initial page load / refresh) ---
+        if (sortedNewsKeys.length === 0 || currentList.length !== sortedNewsKeys.length) {
+            const ONE_DAY = 24 * 60 * 60 * 1000; // 24 Hours in milliseconds
+            const now = Date.now();
+
+            currentList.sort((a, b) => {
+                const timeA = a.timestamp || 0;
+                const timeB = b.timestamp || 0;
+                
+                const isNewA = (now - timeA) < ONE_DAY;
+                const isNewB = (now - timeB) < ONE_DAY;
+
+                // Rule 1: Duitai 24 ghontar modhe hole latest ta age ashbe
+                if (isNewA && isNewB) {
+                    return timeB - timeA;
+                }
+                // Rule 2: Ekta 24h er modhe ebong arekta puraton hole, 24h er notun news top-e thakbe
+                if (isNewA && !isNewB) return -1;
+                if (!isNewA && isNewB) return 1;
+
+                // Rule 3: Duitai 24h er besi puraton hole Upvotes onujayi sort hobe
+                if (b.upVotes !== a.upVotes) {
+                    return b.upVotes - a.upVotes;
+                }
+
+                return timeB - timeA;
+            });
+
+            sortedNewsKeys = currentList.map(item => item.id);
+        }
+
+        // --- RENDER ITEMS IN FIXED ORDER ---
+        feed.innerHTML = '';
+
+        sortedNewsKeys.forEach(id => {
+            const item = newsMap[id];
+            if (!item) return;
+
             const art = document.createElement('article');
             art.className = 'news-item';
             
@@ -156,6 +208,12 @@ function render() {
                 restOfContent = restOfContent.slice(1);
             }
 
+            const commentsObj = item.comments || {};
+            const commentsList = Object.keys(commentsObj).map(commentId => ({
+                id: commentId,
+                ...commentsObj[commentId]
+            }));
+
             art.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <h2 style="margin:0; font-family:serif; text-transform: uppercase;">${item.title}</h2>
@@ -166,10 +224,164 @@ function render() {
                 <p style="text-align:justify; line-height:1.6; font-size: 1.05rem;">
                     <span class="drop-cap">${firstLetter}</span>${restOfContent}
                 </p>
+
+                <!-- Voting & Comment Icon Row -->
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                    <button onclick="voteNews('${item.id}', 'up')" 
+                            style="background: #e0f2fe; border: 1px solid #0284c7; color: #0284c7; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; align-items: center; gap: 5px;">
+                        ▲ <span>${item.upVotes}</span>
+                    </button>
+                    
+                    <button onclick="voteNews('${item.id}', 'down')" 
+                            style="background: #ffe4e6; border: 1px solid #e11d48; color: #e11d48; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; align-items: center; gap: 5px;">
+                        ▼ <span>${item.downVotes}</span>
+                    </button>
+
+                    <button onclick="toggleCommentSection('${item.id}')" 
+                            style="background: #fdfbf7; border: 1px solid #000; color: #000; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; align-items: center; gap: 5px;">
+                        <i class="fa-solid fa-comment"></i> <span>${commentsList.length}</span>
+                    </button>
+                </div>
+
+                <!-- Retro Style Comment Section -->
+                <div id="comment-box-${item.id}" style="margin-top: 15px; background: #fdfbf7; padding: 12px; border: 1px solid #000; box-shadow: 2px 2px 0px rgba(0,0,0,0.8); display: none;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 0.85rem; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 5px; font-family: serif;">
+                        <i class="fa-solid fa-comment" style="margin-right: 5px;"></i> COMMENTS (${commentsList.length})
+                    </h4>
+                    
+                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                        <input type="text" id="comment-input-${item.id}" placeholder="Write a comment as ${currentUser}..." 
+                               style="flex: 1; padding: 6px; border: 1px solid #000; background: #fff; font-size: 0.85rem;">
+                        <button onclick="addComment('${item.id}')" 
+                                style="background: #000; color: #fff; border: 1px solid #000; padding: 6px 12px; cursor: pointer; font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">
+                            SEND
+                        </button>
+                    </div>
+
+                    <div style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                        ${commentsList.length === 0 ? '<p style="font-size:0.8rem; font-style:italic; color:#555; margin:5px 0;">No comments yet. Be the first one!</p>' : ''}
+                        ${commentsList.map(c => {
+                            const repliesObj = c.replies || {};
+                            const repliesList = Object.values(repliesObj);
+                            return `
+                                <div style="background: #fff; border: 1px solid #000; padding: 8px;">
+                                    <div style="display:flex; justify-content:space-between;">
+                                        <strong style="font-size: 0.8rem; color: #000; font-family: serif;">${c.author}:</strong>
+                                    </div>
+                                    <p style="font-size: 0.85rem; color: #222; margin: 4px 0;">${c.text}</p>
+                                    
+                                    <div style="margin-left: 15px; margin-top: 6px; display: flex; flex-direction: column; gap: 4px; border-left: 2px solid #ccc; padding-left: 8px;">
+                                        ${repliesList.map(r => `
+                                            <div style="background: #f9f9f9; border: 1px solid #ddd; padding: 4px 6px;">
+                                                <strong style="font-size: 0.75rem; color: #333;">${r.author}:</strong>
+                                                <span style="font-size: 0.8rem; color: #444;">${r.text}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+
+                                    <div style="display: flex; gap: 4px; margin-top: 6px;">
+                                        <input type="text" id="reply-input-${c.id}" placeholder="Reply to ${c.author}..." 
+                                               style="flex: 1; padding: 4px; border: 1px solid #000; background: #fff; font-size: 0.75rem;">
+                                        <button onclick="addReply('${item.id}', '${c.id}')" 
+                                                style="background: #000; color: #fff; border: 1px solid #000; padding: 4px 8px; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">
+                                            REPLY
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
             `;
             feed.appendChild(art);
         });
     });
+}
+
+// 4. Toggle Comment Section
+function toggleCommentSection(newsId) {
+    const box = document.getElementById(`comment-box-${newsId}`);
+    if (box) {
+        if (box.style.display === 'none' || box.style.display === '') {
+            box.style.display = 'block';
+            box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            box.style.display = 'none';
+        }
+    }
+}
+
+// 5. Vote Action Function
+function voteNews(newsId, type) {
+    if (!currentUser || currentUser === 'Anonymous') {
+        alert("Vote dite prothome login koro!");
+        return;
+    }
+
+    const voteRef = db.ref(`news_portal/${newsId}/votes/${currentUser}`);
+
+    voteRef.once('value', (snapshot) => {
+        const currentVote = snapshot.val();
+        if (currentVote === type) {
+            voteRef.remove(); 
+        } else {
+            voteRef.set(type); 
+        }
+    });
+}
+
+// 6. Add Main Comment
+function addComment(newsId) {
+    const inputField = document.getElementById(`comment-input-${newsId}`);
+    if (!inputField) return;
+
+    const commentText = inputField.value.trim();
+    if (!commentText) {
+        alert("Khali comment kora jabe na!");
+        return;
+    }
+
+    const commentData = {
+        author: currentUser,
+        text: commentText,
+        timestamp: Date.now()
+    };
+
+    db.ref(`news_portal/${newsId}/comments`).push(commentData)
+        .then(() => {
+            inputField.value = '';
+        })
+        .catch(err => {
+            console.error("Comment error:", err);
+            alert("Comment add korte problem hoyeche!");
+        });
+}
+
+// 7. Add Reply
+function addReply(newsId, commentId) {
+    const inputField = document.getElementById(`reply-input-${commentId}`);
+    if (!inputField) return;
+
+    const replyText = inputField.value.trim();
+    if (!replyText) {
+        alert("Khali reply kora jabe na!");
+        return;
+    }
+
+    const replyData = {
+        author: currentUser,
+        text: replyText,
+        timestamp: Date.now()
+    };
+
+    db.ref(`news_portal/${newsId}/comments/${commentId}/replies`).push(replyData)
+        .then(() => {
+            inputField.value = '';
+        })
+        .catch(err => {
+            console.error("Reply error:", err);
+            alert("Reply add korte problem hoyeche!");
+        });
 }
 
 function del(id) {
@@ -177,7 +389,8 @@ function del(id) {
         db.ref('news_portal').child(id).remove();
     }
 }
-// ১. ব্রেকিং নিউজ আপডেট করার ফাংশন (Journalist এর জন্য)
+
+// 8. Breaking News Update
 function updateBreaking() {
     const text = document.getElementById('breakingInput').value.trim();
     if (!text) {
@@ -194,13 +407,11 @@ function updateBreaking() {
     });
 }
 
-// ২. ডাটাবেজ থেকে ব্রেকিং নিউজ রিয়েল-টাইমে শোনা (সব পেজের জন্য)
-// script.js এর শেষে এটি যোগ করুন (যদি আগে না করে থাকেন)
+// 9. Breaking News Listener
 function listenBreaking() {
     const marquee = document.querySelector('.breaking-news-container marquee');
     if (!marquee) return;
 
-    // Firebase database থেকে breakingNews নোডটি চেক করা
     db.ref('breakingNews').on('value', (snapshot) => {
         const data = snapshot.val();
         if (data && data.text) {
@@ -211,10 +422,6 @@ function listenBreaking() {
     });
 }
 
-// পেজ লোড হওয়ার সময় লিসেনার চালু করা
-window.addEventListener('load', listenBreaking);
-
-// ৩. উইন্ডো লোড হওয়ার সময় এই লিসেনার চালু করা
 const originalOnload = window.onload;
 window.onload = function() {
     console.log("App Started...");
@@ -224,7 +431,7 @@ window.onload = function() {
     listenBreaking();
 };
 
-const myKey = "e9fa5ff4c995f29c349050bf3b4f3bc6"; // Tomar Dhaka key-ta eikhane boshalom
+const myKey = "e9fa5ff4c995f29c349050bf3b4f3bc6"; 
 const myCity = "Dhaka";
 
 async function getTheWeather() {
@@ -243,10 +450,9 @@ async function getTheWeather() {
             condElement.innerText = weatherData.weather[0].main.toUpperCase();
 
             const conditionCode = weatherData.weather[0].icon; 
-            const isNight = conditionCode.endsWith('n'); // 'n' thakle raat
+            const isNight = conditionCode.endsWith('n'); 
             let iconClass = "fa-solid fa-cloud"; 
 
-            // Dynamic logic for Day/Night
             if (conditionCode.startsWith('01')) {
                 iconClass = isNight ? "fa-solid fa-moon" : "fa-solid fa-sun";
             } else if (conditionCode.startsWith('02')) {
