@@ -75,6 +75,15 @@
 <script src="script.js"></script>
 
 <script>
+    // Security Check: Keu login na kore thakle direct login page-e pathiye debe
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
+        alert("❌ Access Denied! Prothome login koro.");
+        window.location.replace("login.html");
+    }
+</script>
+
+<script>
     // ডেট ডিসপ্লে ঠিক রাখার কোড
     const now = new Date();
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
