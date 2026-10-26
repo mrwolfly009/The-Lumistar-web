@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Lumistar - Viewer Mode</title>
     <link rel="stylesheet" href="style.css">
-  
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
 </head>
 <body>
 
@@ -26,6 +24,20 @@
 
     <header class="masthead">
         <h1 style="text-align: center; font-size: 3.5rem; margin: 10px 0;">THE LUMISTAR</h1>
+        
+        <!-- Rotating Ads Banner with External Top-Right Countdown -->
+        <div style="width: 100%; margin: 15px 0; position: relative;">
+            <!-- Countdown Box (Outside & Top-Right of the ad box) -->
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 0;">
+                <span id="adCountdown" style="background: #000; color: #fff; font-size: 0.7rem; padding: 2px 8px; font-family: monospace; font-weight: bold; border-radius: 3px 3px 0 0; border: 1px solid #000; border-bottom: none;">20s</span>
+            </div>
+            
+            <!-- Ad Box -->
+            <div id="adBannerContainer" style="margin: 0; border: 1px solid #000; background: #fdfbf7; padding: 10px; text-align: center; box-shadow: 2px 2px 0px rgba(0,0,0,0.8); display: none;">
+                <div id="adContentWrapper"></div>
+            </div>
+        </div>
+
         <div class="date-line" id="liveDateDisplay">VOL. XCIV... No. 31,102 — LOADING...</div>
     </header>
 
@@ -90,13 +102,10 @@
     const dateElem = document.getElementById('liveDateDisplay');
     if(dateElem) dateElem.innerText = `VOL. XCIV... No. 31,102 — ${now.toLocaleDateString('en-US', options).toUpperCase()}`;
 
-    // --- এই লাইনটি নতুন যোগ করুন ---
-    // এটি script.js থেকে ব্রেকিং নিউজের লজিকটি চালু করবে
     if (typeof listenBreaking === "function") {
         listenBreaking();
     }
 </script>
-
 
 </body>
 </html>
