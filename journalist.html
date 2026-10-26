@@ -6,7 +6,6 @@
     <title>The Lumistar - Journalist</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
 </head>
 <body>
 
@@ -36,7 +35,7 @@
     flex: 1; 
     padding: 5px 8px; 
     border: 1px solid #000; 
-    height: 32px; /* বাটনের উচ্চতার সাথে মিল রাখা হয়েছে */
+    height: 32px;
     box-sizing: border-box;
 ">
 
@@ -56,6 +55,23 @@
 ">UPDATE</button>
 
     </div>
+</div>
+
+<!-- ADS BOX (Added Here) -->
+<div class="post-box" style="border-bottom: 3px double #000; margin-bottom: 20px; padding-bottom: 15px; background: #fdfbf7; border: 1px solid #000; padding: 15px; box-shadow: 3px 3px 0px rgba(0,0,0,0.8);">
+    <h3 style="margin-top: 0; font-family: serif; text-transform: uppercase; font-size: 0.95rem; border-bottom: 1px solid #000; padding-bottom: 5px;">
+        <i class="fa-solid fa-rectangle-ad" style="margin-right: 5px;"></i> ADS BOX (BANNER UPLOAD)
+    </h3>
+    <input type="text" id="adTitleInput" placeholder="Ad Title / Sponsor Name (Optional)..." style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #000; background: #fff; font-size: 0.9rem; box-sizing: border-box;">
+    <input type="text" id="adImageInput" placeholder="Ad Image URL (Link) dao..." style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #000; background: #fff; font-size: 0.9rem; box-sizing: border-box;">
+    <p style="margin: 5px 0 2px 0; font-size: 0.8rem; font-style: italic;">Or upload ad image from gallery:</p>
+    <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 10px;">
+        <input type="file" id="adFileInput" accept="image/*" style="margin-bottom:0; font-size: 0.85rem;">
+        <button id="cancelAdImg" onclick="clearAdFile()" style="display:none; background:red; color:white; border:none; cursor:pointer; padding:5px 10px; font-weight:bold;">【X】</button>
+    </div>
+    <button onclick="publishAd()" style="background: #000; color: #fff; border: 1px solid #000; padding: 8px 15px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 0.85rem;">
+        UPLOAD AD
+    </button>
 </div>
 
 <div class="post-box">
@@ -125,13 +141,12 @@
 <script src="script.js"></script>
 
 <script>
-    // নিরাপত্তা চেক: ইউজার লগইন করা কি না এবং তার রোল 'journalist' কি না তা যাচাই করা
     const currentUser = localStorage.getItem('currentUser');
     const userRole = localStorage.getItem('userRole');
 
     if (!currentUser || userRole !== 'journalist') {
         alert("❌ Access Denied! Apnar journalist access nei.");
-        window.location.replace("login.html"); // ভিউয়ার হলে বা লগইন না থাকলে সরাসরি লগইন পেজে পাঠিয়ে দেবে
+        window.location.replace("login.html");
     }
 </script>
   
