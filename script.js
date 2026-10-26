@@ -30,7 +30,7 @@ function updateClocks() {
     clock1.innerText = timeString;
 }
 
-// 2. Publish function & Image handling
+// 2. Publish function & Image handling (Optimized with Loading & Compression)
 const fileInput = document.getElementById('fileInput');
 
 if (fileInput) {
@@ -60,6 +60,12 @@ function publish() {
         return;
     }
 
+    // Loading State
+    const publishBtn = document.querySelector('button[onclick="publish()"]') || event.target;
+    const originalText = publishBtn.innerText;
+    publishBtn.innerText = "PUBLISHING...";
+    publishBtn.disabled = true;
+
     if (fileInput.files && fileInput.files[0]) {
         const file = fileInput.files[0];
         const reader = new FileReader();
@@ -71,7 +77,7 @@ function publish() {
                 const canvas = document.createElement('canvas');
                 let width = img.width;
                 let height = img.height;
-                const max_size = 800;
+                const max_size = 700; // Optimized size for fast publishing
 
                 if (width > height) {
                     if (width > max_size) {
@@ -89,17 +95,17 @@ function publish() {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                saveToFirebase(t, compressedBase64, c);
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6); // Optimized quality
+                saveToFirebase(t, compressedBase64, c, publishBtn, originalText);
             };
         };
         reader.readAsDataURL(file);
     } else {
-        saveToFirebase(t, iLink || "", c);
+        saveToFirebase(t, iLink || "", c, publishBtn, originalText);
     }
 }
 
-function saveToFirebase(title, imgSource, content) {
+function saveToFirebase(title, imgSource, content, btnElement, originalText) {
     db.ref('news_portal').push({
         title: title,
         img: imgSource,
@@ -113,7 +119,197 @@ function saveToFirebase(title, imgSource, content) {
         document.getElementById('cInput').value = "";
         const fInput = document.getElementById('fileInput');
         if(fInput) fInput.value = "";
-    }).catch(err => console.error("Firebase Error:", err));
+        const cancelImg = document.getElementById('cancelImg');
+        if (cancelImg) cancelImg.style.display = 'none';
+
+        if (btnElement) {
+            btnElement.innerText = originalText;
+            btnElement.disabled = false;
+        }
+    }).catch(err => {
+        console.error("Firebase Error:", err);
+        alert("Publish korte somossa hoyeche. Abar chesta korun!");
+        if (btnElement) {
+            btnElement.innerText = originalText;
+            btnElement.disabled = false;
+        }
+    });
+}
+
+// --- NEW: ADS UPLOAD & MANAGEMENT (For Journalist Panel) ---
+const adFileInput = document.getElementById('adFileInput');
+
+if (adFileInput) {
+    adFileInput.onchange = function() {
+        const file = this.files[0];
+        if (file) {
+            const cancelAdImg = document.getElementById('cancelAdImg');
+            if (cancelAdImg) cancelAdImg.style.display = 'inline-block';
+        }
+    };
+}
+
+function clearAdFile() {
+    const adFileInput = document.getElementById('adFileInput');
+    if(adFileInput) adFileInput.value = "";
+    const cancelAdImg = document.getElementById('cancelAdImg');
+    if(cancelAdImg) cancelAdImg.style.display = 'none';
+}
+
+function publishAd() {
+    const title = document.getElementById('adTitleInput').value.trim();
+    const link = document.getElementById('adImageInput').value.trim();
+    const adFileInput = document.getElementById('adFileInput');
+
+    if (!adFileInput.files[0] && !link) {
+        alert("Please provide an image URL or upload an ad image!");
+        return;
+    }
+
+    const uploadBtn = document.querySelector('button[onclick="publishAd()"]') || event.target;
+    const originalText = uploadBtn.innerText;
+    uploadBtn.innerText = "UPLOADING AD...";
+    uploadBtn.disabled = true;
+
+    if (adFileInput.files && adFileInput.files[0]) {
+        const file = adFileInput.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const max_size = 700;
+
+                if (width > height) {
+                    if (width > max_size) {
+                        height *= max_size / width;
+                        width = max_size;
+                    }
+                } else {
+                    if (height > max_size) {
+                        width *= max_size / height;
+                        height = max_size;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                saveAdToFirebase(title, compressedBase64, uploadBtn, originalText);
+            };
+        };
+        reader.readAsDataURL(file);
+    } else {
+        saveAdToFirebase(title, link, uploadBtn, originalText);
+    }
+}
+
+function saveAdToFirebase(title, imgSrc, btnElement, originalText) {
+    db.ref('portal_ads').push({
+        title: title,
+        img: imgSrc,
+        timestamp: Date.now()
+    }).then(() => {
+        alert("Ad Uploaded Successfully!");
+        document.getElementById('adTitleInput').value = "";
+        document.getElementById('adImageInput').value = "";
+        const fInput = document.getElementById('adFileInput');
+        if(fInput) fInput.value = "";
+        const cancelAdImg = document.getElementById('cancelAdImg');
+        if (cancelAdImg) cancelAdImg.style.display = 'none';
+
+        if (btnElement) {
+            btnElement.innerText = originalText;
+            btnElement.disabled = false;
+        }
+    }).catch(err => {
+        console.error("Ad Upload Error:", err);
+        alert("Ad upload korte somossa hoyeche!");
+        if (btnElement) {
+            btnElement.innerText = originalText;
+            btnElement.disabled = false;
+        }
+    });
+}
+
+// --- NEW: ROTATING ADS DISPLAY LOGIC & 20s REVERSE COUNTDOWN ---
+let adsList = [];
+let currentAdIndex = 0;
+let adIntervalTimer = null;
+let countdownTimer = null;
+let timeLeft = 20;
+
+function initAdsRotation() {
+    const bannerContainer = document.getElementById('adBannerContainer');
+    if (!bannerContainer) return;
+
+    db.ref('portal_ads').on('value', (snapshot) => {
+        const data = snapshot.val();
+        adsList = [];
+
+        if (data) {
+            for (let key in data) {
+                adsList.push(data[key]);
+            }
+        }
+
+        if (adsList.length > 0) {
+            bannerContainer.style.display = 'block';
+            showCurrentAd();
+
+            // Clear previous timers
+            if (adIntervalTimer) clearInterval(adIntervalTimer);
+            if (countdownTimer) clearInterval(countdownTimer);
+
+            if (adsList.length > 1) {
+                // Main rotation timer (every 20 seconds)
+                adIntervalTimer = setInterval(() => {
+                    currentAdIndex = (currentAdIndex + 1) % adsList.length;
+                    showCurrentAd();
+                }, 20000);
+
+                // Second-by-second countdown timer
+                countdownTimer = setInterval(() => {
+                    timeLeft--;
+                    if (timeLeft < 0) timeLeft = 20;
+                    const counterElem = document.getElementById('adCountdown');
+                    if (counterElem) {
+                        counterElem.innerText = timeLeft + 's';
+                    }
+                }, 1000);
+            } else {
+                // যদি মাত্র ১টি অ্যাড থাকে
+                const counterElem = document.getElementById('adCountdown');
+                if (counterElem) counterElem.innerText = "20s";
+            }
+        } else {
+            bannerContainer.style.display = 'none';
+        }
+    });
+}
+
+function showCurrentAd() {
+    const wrapper = document.getElementById('adContentWrapper');
+    if (!wrapper || adsList.length === 0) return;
+
+    // Reset timer to 20 when ad changes
+    timeLeft = 20;
+    const counterElem = document.getElementById('adCountdown');
+    if (counterElem) {
+        counterElem.innerText = timeLeft + 's';
+    }
+
+    const ad = adsList[currentAdIndex];
+    wrapper.innerHTML = `
+        <img src="${ad.img}" style="width: 100%; max-height: 350px; object-fit: cover; border: 1px solid #000; margin-bottom: 5px;">
+        ${ad.title ? `<p style="font-size:0.85rem; font-family:serif; margin:0; font-style:italic;">$ --- sponsored by ${ad.title} --- (ads)</p>` : ''}
+    `;
 }
 
 // 3. Main Render Function (Strict 24h & Reload-only Ranking)
@@ -426,6 +622,7 @@ const originalOnload = window.onload;
 window.onload = function() {
     console.log("App Started...");
     render();
+    initAdsRotation(); // Start rotating ads banner and countdown on page load
     setInterval(updateClocks, 1000);
     if (originalOnload) originalOnload();
     listenBreaking();
