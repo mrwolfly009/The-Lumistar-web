@@ -237,3 +237,37 @@ img { filter: grayscale(100%); border: 1px solid #000; }
     font-size: 0.9rem;
     letter-spacing: 1px;
 }
+
+/* ==========================================================
+   DESKTOP VIEW OPTIMIZATIONS (3-Column Layout & Ad Banner Fix)
+   ========================================================== */
+@media screen and (min-width: 768px) {
+    .newspaper-container {
+        max-width: 900px !important;
+        padding: 30px !important;
+    }
+
+    /* Header-er ad banner-er size desktop-e control rakhar jonno */
+    #adBannerContainer img {
+        max-height: 900px !important;
+        object-fit: cover !important;
+        width: 100% !important;
+    }
+
+    /* News feed ke 3 ta column-e vag kora (Masonry newspaper style) */
+    #newsFeed {
+        display: block !important;
+        column-count: 3 !important;
+        column-gap: 15px !important;
+        width: 100% !important;
+    }
+
+    /* Proti ti news item ebong desktop ad card-er sizing */
+    .news-item, #desktopAdCard {
+        break-inside: avoid !important;
+        display: inline-block !important;
+        width: 100% !important;
+        margin-bottom: 15px !important;
+        box-sizing: border-box !important;
+    }
+}
