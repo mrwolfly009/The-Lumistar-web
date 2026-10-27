@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Lumistar - Daily Horoscope</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body style="background-color: #f2e9d2; font-family: 'Times New Roman', Times, serif; color: #111;">
+
+<div class="newspaper-container" style="max-width: 900px; margin: 0 auto; padding: 15px; background-color: #f2e9d2;">
+    
+    <!-- Top Retro Info Bar -->
+    <div class="top-info" style="display: flex; justify-content: space-between; border-bottom: 1px solid #000; border-top: 1px solid #000; padding: 4px 0; font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">
+        <a href="viewer.html" style="text-decoration: none; color: #000;">← BACK TO HOME</a>
+        <span id="horoscope-date-top">ASTROLOGICAL FORECAST</span>
+        <span>ESTD. 2026</span>
+    </div>
+
+    <!-- Classic Masthead -->
+    <header class="masthead" style="text-align: center; margin: 15px 0 5px 0;">
+        <h1 style="font-family: 'Times New Roman', Times, serif; font-size: 3.2rem; margin: 0; letter-spacing: 2px; font-weight: bold;">THE LUMISTAR</h1>
+        <div style="font-size: 0.85rem; font-style: italic; border-top: 3px double #000; border-bottom: 3px double #000; padding: 4px 0; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px;">
+        ★ SPECIAL ASTROLOGICAL GAZETTE & PLANETARY REVIEW ★
+        </div>
+    </header>
+
+    <!-- Vintage Horoscope Column Layout -->
+    <main id="horoscopeGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; margin-top: 20px; border-top: 1px solid #000; padding-top: 15px;">
+        <!-- Dynamic content will load here -->
+    </main>
+
+    <!-- Vintage Footer -->
+    <footer style="margin-top: 40px; text-align: center; border-top: 3px double #000; border-bottom: 1px solid #000; padding: 15px 0; font-size: 0.8rem;">
+        <p style="margin: 0 0 5px 0; font-style: italic;">"The Stars Impel, They Do Not Compel."</p>
+        <p style="margin: 0; font-weight: bold;">© 2026 THE LUMISTAR MEDIA GROUP. ALL RIGHTS RESERVED.</p>
+        <div style="margin-top: 8px;">
+            <a href="viewer.html" style="text-decoration: underline; color: #000; font-weight: bold; font-size: 0.85rem;">[ Return to Front Page ]</a>
+        </div>
+    </footer>
+
+</div>
+
+<script>
+    const signsData = [
+        { name: "Aries (মেষ)", symbol: "♈" },
+        { name: "Taurus (বৃষ)", symbol: "♉" },
+        { name: "Gemini (মিথুন)", symbol: "♊" },
+        { name: "Cancer (কর্কট)", symbol: "♋" },
+        { name: "Leo (সিংহ)", symbol: "♌" },
+        { name: "Virgo (কন্যা)", symbol: "♍" },
+        { name: "Libra (তুলা)", symbol: "♎" },
+        { name: "Scorpio (বৃশ্চিক)", symbol: "♏" },
+        { name: "Sagittarius (ধনু)", symbol: "♐" },
+        { name: "Capricorn (মকর)", symbol: "♑" },
+        { name: "Aquarius (কুম্ভ)", symbol: "♒" },
+        { name: "Pisces (মীন)", symbol: "♓" }
+    ];
+
+    const predictionsPool = [
+        "Financial growth is foreseen today. Keep a check on your unnecessary expenses and focus on long-term savings.",
+        "A pleasant surprise awaits you in the evening. Creative works, writing, and studies will yield highly positive results.",
+        "Communication is key today. Avoid unnecessary arguments at your workplace or home and try to stay calm and focused.",
+        "Health needs minor attention. Take some time out of your busy schedule to relax, meditate, and reflect on personal goals.",
+        "Leadership qualities will shine today. You will successfully guide your team or peers through a tricky situation with confidence.",
+        "Attention to detail will save you from major errors. Organize your tasks methodically for a stress-free and productive day.",
+        "Balance and harmony will prevail in relationships. It's a great day to resolve past misunderstandings with close friends.",
+        "Your intuition is exceptionally strong today. Trust your inner gut feelings regarding a crucial personal or career decision.",
+        "Adventure and learning are favored. Explore new ideas or plan a short weekend trip to refresh your tired spirit.",
+        "Hard work and perseverance will finally pay off. Senior figures will notice your dedication and reward your efforts.",
+        "Innovative thoughts will strike you out of nowhere. Share your unique perspective with others to spark interesting collaborations.",
+        "Empathy and kindness will bring you closer to someone special. Artistic pursuits will provide great mental satisfaction.",
+        "Unexpected travel might be on the cards. Keep an open mind as new connections will prove beneficial for your future career.",
+        "Patience is your biggest asset today. Do not rush into hasty decisions regarding investments or legal matters.",
+        "A breakthrough in a long-standing project is near. Stay persistent and lean on your teammates for support."
+    ];
+
+    function loadAutomaticHoroscope() {
+        const gridContainer = document.getElementById('horoscopeGrid');
+        const dateTop = document.getElementById('horoscope-date-top');
+        if (!gridContainer) return;
+
+        const today = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        if (dateTop) {
+            dateTop.innerText = "ISSUE OF — " + today.toLocaleDateString('en-US', options).toUpperCase();
+        }
+
+        // তারিখ এবং মাসের ওপর ভিত্তি করে একটি ইউনিক সিড তৈরি করা, যা প্রতিদিন বদলাবে
+        let daySeed = today.getDate() + (today.getMonth() + 1) * 31 + today.getFullYear();
+        let htmlContent = "";
+
+        signsData.forEach((signObj, index) => {
+            // র্যান্ডমাইজড ও ইউনিক প্রেডিকশন ইনডেক্স বের করার লজিক
+            let predIndex = (daySeed + index * 7 + Math.floor(index * 1.5)) % predictionsPool.length;
+            let predictionText = predictionsPool[predIndex];
+
+            htmlContent += `
+                <div style="background: #fdfbf7; border: 1px solid #000; padding: 12px; border-left: 4px solid #000; box-shadow: 2px 2px 0px rgba(0,0,0,0.8);">
+                    <h3 style="border-bottom: 1px solid #000; padding-bottom: 4px; font-family: 'Times New Roman', Times, serif; text-transform: uppercase; margin: 0 0 8px 0; font-size: 1.05rem;">
+                        ${signObj.symbol} &nbsp; ${signObj.name}
+                    </h3>
+                    <p style="font-size: 0.9rem; text-align: justify; line-height: 1.5; margin: 0; font-family: 'Times New Roman', Times, serif; font-style: italic;">
+                        "${predictionText}"
+                    </p>
+                </div>
+            `;
+        });
+
+        gridContainer.innerHTML = htmlContent;
+    }
+
+    window.onload = function() {
+        loadAutomaticHoroscope();
+    };
+</script>
+
+</body>
+</html>
