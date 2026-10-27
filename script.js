@@ -50,6 +50,7 @@ function clearFile() {
 }
 
 function publish() {
+    const reporterInput = document.getElementById('reporterInput');
     const t = document.getElementById('tInput').value.trim();
     const iLink = document.getElementById('iInput').value.trim();
     const c = document.getElementById('cInput').value.trim();
@@ -59,6 +60,8 @@ function publish() {
         alert("Headline and details are required!");
         return;
     }
+
+    const reporterName = reporterInput ? reporterInput.value.trim() : "";
 
     // Loading State
     const publishBtn = document.querySelector('button[onclick="publish()"]') || event.target;
@@ -96,17 +99,18 @@ function publish() {
                 ctx.drawImage(img, 0, 0, width, height);
                 
                 const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6); // Optimized quality
-                saveToFirebase(t, compressedBase64, c, publishBtn, originalText);
+                saveToFirebase(reporterName, t, compressedBase64, c, publishBtn, originalText);
             };
         };
         reader.readAsDataURL(file);
     } else {
-        saveToFirebase(t, iLink || "", c, publishBtn, originalText);
+        saveToFirebase(reporterName, t, iLink || "", c, publishBtn, originalText);
     }
 }
 
-function saveToFirebase(title, imgSource, content, btnElement, originalText) {
+function saveToFirebase(reporter, title, imgSource, content, btnElement, originalText) {
     db.ref('news_portal').push({
+        reporter: reporter,
         title: title,
         img: imgSource,
         content: content,
@@ -114,6 +118,7 @@ function saveToFirebase(title, imgSource, content, btnElement, originalText) {
         timestamp: Date.now()
     }).then(() => {
         alert("News Published Successfully!");
+        if (document.getElementById('reporterInput')) document.getElementById('reporterInput').value = "";
         document.getElementById('tInput').value = "";
         document.getElementById('iInput').value = "";
         document.getElementById('cInput').value = "";
@@ -268,16 +273,16 @@ function initAdsRotation() {
             if (countdownTimer) clearInterval(countdownTimer);
 
             if (adsList.length > 1) {
-                // Main rotation timer (every 20 seconds)
+                // Main rotation timer (every 15 seconds)
                 adIntervalTimer = setInterval(() => {
                     currentAdIndex = (currentAdIndex + 1) % adsList.length;
                     showCurrentAd();
-                }, 20000);
+                }, 15000);
 
                 // Second-by-second countdown timer
                 countdownTimer = setInterval(() => {
                     timeLeft--;
-                    if (timeLeft < 0) timeLeft = 20;
+                    if (timeLeft < 0) timeLeft = 15;
                     const counterElem = document.getElementById('adCountdown');
                     if (counterElem) {
                         counterElem.innerText = timeLeft + 's';
@@ -286,7 +291,7 @@ function initAdsRotation() {
             } else {
                 // যদি মাত্র ১টি অ্যাড থাকে
                 const counterElem = document.getElementById('adCountdown');
-                if (counterElem) counterElem.innerText = "20s";
+                if (counterElem) counterElem.innerText = "15s";
             }
         } else {
             bannerContainer.style.display = 'none';
@@ -298,8 +303,8 @@ function showCurrentAd() {
     const wrapper = document.getElementById('adContentWrapper');
     if (!wrapper || adsList.length === 0) return;
 
-    // Reset timer to 20 when ad changes
-    timeLeft = 20;
+    // Reset timer to 15 when ad changes
+    timeLeft = 15;
     const counterElem = document.getElementById('adCountdown');
     if (counterElem) {
         counterElem.innerText = timeLeft + 's';
@@ -404,6 +409,9 @@ function render() {
                 restOfContent = restOfContent.slice(1);
             }
 
+            // --- Reporter Name Display Logic ---
+            let reporterHtml = item.reporter ? `<div style="text-align: right; font-size: 0.8rem; font-style: italic; font-weight: bold; margin-top: 10px;">-- Reported by ${item.reporter}</div>` : '';
+
             const commentsObj = item.comments || {};
             const commentsList = Object.keys(commentsObj).map(commentId => ({
                 id: commentId,
@@ -420,6 +428,7 @@ function render() {
                 <p style="text-align:justify; line-height:1.6; font-size: 1.05rem;">
                     <span class="drop-cap">${firstLetter}</span>${restOfContent}
                 </p>
+                ${reporterHtml}
 
                 <!-- Voting & Comment Icon Row -->
                 <div style="display: flex; align-items: center; gap: 10px; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">
