@@ -8,12 +8,14 @@
     <link rel="icon" type="image/jpeg" href="logo.jpg">
     <style>
         .login-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 80vh;
-            padding: 20px;
-        }
+    display: flex;
+    flex-direction: column; /* লোগো আর বক্সকে নিচে নিচে (vertical) আনার জন্য */
+    align-items: center;    /* মাঝখানে রাখার জন্য */
+    justify-content: center;
+    min-height: 80vh;
+    padding: 20px;
+}
+
         .login-box {
             width: 100%;
             max-width: 400px;
@@ -31,9 +33,17 @@
 </noscript>
 
 <div class="login-wrapper">
+  
+    <!-- Login Box-er baire upore Logo ebong Name -->
+    <div style="text-align: center; margin: 0px 0 0px 0;">
+        <img src="star.png" alt="Star Logo" style="width: 100px; height: 100px; object-fit: contain; border: none; outline: none; background: transparent; display: block; margin: 0 auto 5px auto;">
+        <h1 style="font-family: serif; font-size: 1.6rem; font-weight: bold; text-transform: uppercase; margin: 0; letter-spacing: 1px; color: #000;">
+            THE LUMISTAR NEWS
+        </h1>
+    </div>
     <div class="login-box">
         <header class="masthead">
-            <h2 style="text-align:center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-top: 0;">LUMISTAR ACCESS</h2>
+            <h2 style="text-align:center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-top: 0;">NEWSROOM</h2>
         </header>
 
         <p style="text-align:center; font-style: italic; font-size: 0.9rem;">Please identify yourself to enter the portal.</p>
