@@ -1,120 +1,390 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="auth-pending">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Lumistar - Daily Horoscope</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="icon" type="image/jpeg" href="logo.jpg">
-</head>
-<body style="background-color: #f2e9d2; font-family: 'Times New Roman', Times, serif; color: #111;">
 
-<div class="newspaper-container" style="max-width: 900px; margin: 0 auto; padding: 15px; background-color: #f2e9d2;">
-    
-    <!-- Top Retro Info Bar -->
-    <div class="top-info" style="display: flex; justify-content: space-between; border-bottom: 1px solid #000; border-top: 1px solid #000; padding: 4px 0; font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">
-        <a href="viewer.html" style="text-decoration: none; color: #000;">← BACK TO HOME</a>
-        <span id="horoscope-date-top">ASTROLOGICAL FORECAST</span>
-        <span>ESTD. 2026</span>
+    <!-- Hide the page until login is verified -->
+    <style>
+        html.auth-pending body { visibility: hidden; }
+    </style>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+
+    <!-- Retro vintage theme (this page only, style.css is not touched) -->
+    <style>
+        :root { --paper:#efe2c0; --card:#f7edd2; --ink:#2b1d12; --red:#8c2f1b; --gold:#b7852b; --teal:#2f5d5a; }
+        /* Page background, font, container, top bar, title and date line all come from style.css, same as viewer.html */
+        body.rt .top-info a { color:#000; text-decoration:none; }
+        body.rt .rt-note { text-align:center; font-size:0.75rem; font-style:italic; margin:-10px 0 0; color:#5a4630; }
+        body.rt .rt-moon { margin-top:16px; background:var(--teal); color:#f3e6c4; border:3px double #f3e6c4; outline:2px solid var(--teal); padding:14px; text-align:center; }
+        body.rt .rt-moon .big { font-size:2.6rem; line-height:1; }
+        body.rt .rt-moon p { margin:5px 0 0; font-size:0.88rem; line-height:1.45; }
+        body.rt .rt-moon .tiny { font-size:0.7rem; opacity:0.8; }
+        body.rt .rt-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(290px,100%),1fr)); gap:16px; margin-top:20px; }
+        body.rt .rt-card { background:var(--card); border:2px solid var(--ink); outline:1px solid var(--ink); outline-offset:3px; padding:14px; box-shadow:4px 4px 0 var(--gold); margin:3px; }
+        body.rt .rt-card h3 { margin:0; font-size:1.2rem; text-align:center; border-bottom:2px double var(--ink); padding-bottom:6px; }
+        body.rt .rt-dates { text-align:center; font-size:0.74rem; font-style:italic; color:#5a4630; margin:5px 0 8px; }
+        body.rt .rt-stamp { display:block; width:max-content; max-width:100%; margin:0 auto 10px; border:2px solid var(--red); color:var(--red); padding:3px 10px; transform:rotate(-2deg); font-weight:bold; font-size:0.82rem; text-align:center; }
+        body.rt .rt-stamp .st { letter-spacing:2px; display:block; font-size:1rem; }
+        body.rt .rt-lead { font-size:0.95rem; line-height:1.5; font-style:italic; margin:0 0 10px; padding:6px 8px; border-left:4px solid var(--gold); background:rgba(183,133,43,0.12); }
+        body.rt .rt-lead.neg { border-left-color:var(--red); background:rgba(140,47,27,0.1); }
+        body.rt .rt-line { font-size:0.9rem; line-height:1.55; margin:0 0 7px; }
+        body.rt .rt-line b { color:var(--teal); }
+        body.rt .rt-warn { font-size:0.85rem; line-height:1.5; margin:9px 0 0; padding:6px 8px; border:1px dashed var(--red); color:var(--red); }
+        body.rt .rt-lucky { margin-top:10px; padding-top:8px; border-top:2px double var(--ink); display:grid; grid-template-columns:1fr 1fr; gap:4px 10px; font-size:0.8rem; }
+        body.rt .rt-dot { display:inline-block; width:13px; height:13px; border-radius:50%; border:1px solid var(--ink); vertical-align:middle; margin-right:4px; }
+        body.rt .rt-foot { margin-top:34px; text-align:center; border-top:4px double var(--ink); padding:12px 0; font-size:0.8rem; }
+        body.rt .rt-foot a { color:var(--red); font-weight:bold; }
+    </style>
+
+    <!-- Login guard: any logged-in user (viewer or journalist) can stay -->
+    <script src="auth.js"></script>
+    <script>
+        (function () {
+            if (requireLogin()) {
+                document.documentElement.classList.remove('auth-pending');
+            }
+        })();
+    </script>
+</head>
+<body class="rt">
+
+<div class="newspaper-container">
+
+    <div class="top-info">
+        <a href="viewer.html">&larr; Back to home</a>
+        <span id="horoscope-date-top">Astrological forecast</span>
+        <span>Estd. 2026</span>
     </div>
 
-    <!-- Classic Masthead -->
-    <header class="masthead" style="text-align: center; margin: 15px 0 5px 0;">
-        <h1 style="font-family: 'Times New Roman', Times, serif; font-size: 3.2rem; margin: 0; letter-spacing: 2px; font-weight: bold;">THE LUMISTAR</h1>
-        <div style="font-size: 0.85rem; font-style: italic; border-top: 3px double #000; border-bottom: 3px double #000; padding: 4px 0; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px;">
-        ★ SPECIAL ASTROLOGICAL GAZETTE & PLANETARY REVIEW ★
-        </div>
+    <header class="masthead">
+        <h1>THE LUMISTAR</h1>
     </header>
+    <div class="date-line">&#9733; The Daily Astrological Gazette &#9733;</div>
+    <p class="rt-note">For entertainment purposes only. The stars are not a substitute for good judgement.</p>
 
-    <!-- Vintage Horoscope Column Layout -->
-    <main id="horoscopeGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; margin-top: 20px; border-top: 1px solid #000; padding-top: 15px;">
-        <!-- Dynamic content will load here -->
-    </main>
+    <section id="moonBox"></section>
 
-    <!-- Vintage Footer -->
-    <footer style="margin-top: 40px; text-align: center; border-top: 3px double #000; border-bottom: 1px solid #000; padding: 15px 0; font-size: 0.8rem;">
-        <p style="margin: 0 0 5px 0; font-style: italic;">"The Stars Impel, They Do Not Compel."</p>
-        <p style="margin: 0; font-weight: bold;">© 2026 THE LUMISTAR MEDIA GROUP. ALL RIGHTS RESERVED.</p>
-        <div style="margin-top: 8px;">
-            <a href="viewer.html" style="text-decoration: underline; color: #000; font-weight: bold; font-size: 0.85rem;">[ Return to Front Page ]</a>
-        </div>
+    <main id="horoscopeGrid" class="rt-grid"></main>
+
+    <footer class="rt-foot">
+        <p style="margin:0 0 5px; font-style:italic;">"The stars impel, they do not compel."</p>
+        <p style="margin:0; font-weight:bold;">&copy; 2026 The Lumistar Media Group. All rights reserved.</p>
+        <p style="margin:8px 0 0;"><a href="viewer.html">[ Return to the front page ]</a></p>
     </footer>
 
 </div>
 
 <script>
-    const signsData = [
-        { name: "Aries (মেষ)", symbol: "♈" },
-        { name: "Taurus (বৃষ)", symbol: "♉" },
-        { name: "Gemini (মিথুন)", symbol: "♊" },
-        { name: "Cancer (কর্কট)", symbol: "♋" },
-        { name: "Leo (সিংহ)", symbol: "♌" },
-        { name: "Virgo (কন্যা)", symbol: "♍" },
-        { name: "Libra (তুলা)", symbol: "♎" },
-        { name: "Scorpio (বৃশ্চিক)", symbol: "♏" },
-        { name: "Sagittarius (ধনু)", symbol: "♐" },
-        { name: "Capricorn (মকর)", symbol: "♑" },
-        { name: "Aquarius (কুম্ভ)", symbol: "♒" },
-        { name: "Pisces (মীন)", symbol: "♓" }
+(function () {
+    var signs = [
+        { name: "Aries",       symbol: "♈", dates: "Mar 21 – Apr 19" },
+        { name: "Taurus",      symbol: "♉", dates: "Apr 20 – May 20" },
+        { name: "Gemini",      symbol: "♊", dates: "May 21 – Jun 20" },
+        { name: "Cancer",      symbol: "♋", dates: "Jun 21 – Jul 22" },
+        { name: "Leo",         symbol: "♌", dates: "Jul 23 – Aug 22" },
+        { name: "Virgo",       symbol: "♍", dates: "Aug 23 – Sep 22" },
+        { name: "Libra",       symbol: "♎", dates: "Sep 23 – Oct 22" },
+        { name: "Scorpio",     symbol: "♏", dates: "Oct 23 – Nov 21" },
+        { name: "Sagittarius", symbol: "♐", dates: "Nov 22 – Dec 21" },
+        { name: "Capricorn",   symbol: "♑", dates: "Dec 22 – Jan 19" },
+        { name: "Aquarius",    symbol: "♒", dates: "Jan 20 – Feb 18" },
+        { name: "Pisces",      symbol: "♓", dates: "Feb 19 – Mar 20" }
     ];
 
-    const predictionsPool = [
-        "Financial growth is foreseen today. Keep a check on your unnecessary expenses and focus on long-term savings.",
-        "A pleasant surprise awaits you in the evening. Creative works, writing, and studies will yield highly positive results.",
-        "Communication is key today. Avoid unnecessary arguments at your workplace or home and try to stay calm and focused.",
-        "Health needs minor attention. Take some time out of your busy schedule to relax, meditate, and reflect on personal goals.",
-        "Leadership qualities will shine today. You will successfully guide your team or peers through a tricky situation with confidence.",
-        "Attention to detail will save you from major errors. Organize your tasks methodically for a stress-free and productive day.",
-        "Balance and harmony will prevail in relationships. It's a great day to resolve past misunderstandings with close friends.",
-        "Your intuition is exceptionally strong today. Trust your inner gut feelings regarding a crucial personal or career decision.",
-        "Adventure and learning are favored. Explore new ideas or plan a short weekend trip to refresh your tired spirit.",
-        "Hard work and perseverance will finally pay off. Senior figures will notice your dedication and reward your efforts.",
-        "Innovative thoughts will strike you out of nowhere. Share your unique perspective with others to spark interesting collaborations.",
-        "Empathy and kindness will bring you closer to someone special. Artistic pursuits will provide great mental satisfaction.",
-        "Unexpected travel might be on the cards. Keep an open mind as new connections will prove beneficial for your future career.",
-        "Patience is your biggest asset today. Do not rush into hasty decisions regarding investments or legal matters.",
-        "A breakthrough in a long-standing project is near. Stay persistent and lean on your teammates for support."
-    ];
+    // Short outlook line shown BEFORE the love section.
+    // Rating 4-5 = positive, 3 = mixed, 1-2 = negative.
+    var LEADS = {
+        good: [
+            "The stars are on your side today. Make the most of it.",
+            "A bright day is waiting. Small efforts will pay off well.",
+            "Luck leans your way. Say yes to good opportunities.",
+            "Confidence comes easily today. Trust your instincts."
+        ],
+        mid: [
+            "A mixed day, with some good moments and some bumps. Stay steady.",
+            "Nothing dramatic today. Careful steps will serve you best.",
+            "Some things go well, others need patience. Take it slowly.",
+            "An ordinary day with a few surprises. Stay flexible."
+        ],
+        bad: [
+            "A difficult day ahead. Keep your expectations low and your temper lower.",
+            "The stars are not kind today. Avoid risks and big decisions.",
+            "Things may feel heavy and slow today. Be patient with yourself.",
+            "Expect some friction today. Think twice before you speak or act."
+        ]
+    };
 
-    function loadAutomaticHoroscope() {
-        const gridContainer = document.getElementById('horoscopeGrid');
-        const dateTop = document.getElementById('horoscope-date-top');
-        if (!gridContainer) return;
-
-        const today = new Date();
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        if (dateTop) {
-            dateTop.innerText = "ISSUE OF — " + today.toLocaleDateString('en-US', options).toUpperCase();
+    var POOLS = {
+        love: {
+            icon: "❤️", label: "Love & relationships",
+            good: [
+                "A lovely moment with someone close is likely. Speak openly.",
+                "An old misunderstanding may finally clear up. Forgiving feels easy today.",
+                "A sweet message may reach you. Warmth grows in your relationships.",
+                "Time with friends lifts your mood. A new connection is possible."
+            ],
+            mid: [
+                "A calm day in love. Appreciate what you already have.",
+                "You may hesitate to share your feelings. Wait for the right moment.",
+                "A small disagreement may come up, but an honest talk will settle it.",
+                "Some time alone will do you good. Make room for yourself."
+            ],
+            bad: [
+                "An argument with someone close is possible. Do not speak in anger.",
+                "Someone's behaviour may hurt you. Pause before you react.",
+                "Misunderstandings may grow. Say important things in person, not in messages.",
+                "Avoid big relationship decisions today. Emotions may cloud your judgement."
+            ]
+        },
+        career: {
+            icon: "💼", label: "Work & study",
+            good: [
+                "Your focus is sharp. A stuck task can finally be finished.",
+                "Your hard work gets noticed. Praise or good news may follow.",
+                "A difficult topic suddenly becomes clear. Study pays off today.",
+                "Colleagues or classmates will help. Teamwork brings success."
+            ],
+            mid: [
+                "Work moves at a medium pace. Finish things one at a time.",
+                "Some tasks may slip, but a good plan will get you back on track.",
+                "Tidy up old work today rather than starting something new.",
+                "It takes time to settle into your books. Study in short bursts."
+            ],
+            bad: [
+                "Your focus may drift. Keep your phone and notifications away.",
+                "Small mistakes are likely. Double-check before you submit anything.",
+                "A clash with a colleague or classmate is possible. Do not get dragged into arguments.",
+                "Do not promise anything you have not checked. Avoid risky decisions today."
+            ]
+        },
+        health: {
+            icon: "🩺", label: "Health",
+            good: [
+                "Body and mind feel fresh. A light walk will do you good.",
+                "Energy runs high. Give your favourite sport or exercise some time.",
+                "You should sleep well tonight. Drink enough water.",
+                "Your mood is cheerful. Favourite music or a good book will keep it that way."
+            ],
+            mid: [
+                "Health is fair. If your meals are irregular, take more care.",
+                "You may feel tired by evening. Do not skip your rest.",
+                "Long screen time will strain your eyes. Take short breaks.",
+                "A little restlessness is possible. A few deep breaths will help."
+            ],
+            bad: [
+                "Tiredness and a headache are possible. Rest between tasks.",
+                "Avoid fried and outside food today. Your stomach may complain.",
+                "Stress may build up. Talk to someone you trust.",
+                "Do not ignore weakness in your body. See a doctor if it lasts."
+            ]
+        },
+        money: {
+            icon: "💰", label: "Money",
+            good: [
+                "Good news about money may arrive. Some dues may come back to you.",
+                "A good day to save. Start small, but start.",
+                "A little unexpected income is possible.",
+                "A good day to buy something you need. Bargaining pays off."
+            ],
+            mid: [
+                "Income and spending stay about even. Cut unnecessary costs.",
+                "Think twice before shopping. Do you really need it?",
+                "Be careful with lending and borrowing. Keep clear records.",
+                "Check money matters yourself instead of trusting hearsay."
+            ],
+            bad: [
+                "An unexpected expense may appear. Keep some money aside.",
+                "Be careful with online deals. Do not click unknown links.",
+                "Money you lent may come back late.",
+                "Impulse buying will bring regret. Avoid big spending today."
+            ]
         }
+    };
 
-        // তারিখ এবং মাসের ওপর ভিত্তি করে একটি ইউনিক সিড তৈরি করা, যা প্রতিদিন বদলাবে
-        let daySeed = today.getDate() + (today.getMonth() + 1) * 31 + today.getFullYear();
-        let htmlContent = "";
+    var CATEGORIES = ["love", "career", "health", "money"];
 
-        signsData.forEach((signObj, index) => {
-            // র্যান্ডমাইজড ও ইউনিক প্রেডিকশন ইনডেক্স বের করার লজিক
-            let predIndex = (daySeed + index * 7 + Math.floor(index * 1.5)) % predictionsPool.length;
-            let predictionText = predictionsPool[predIndex];
+    var CAUTIONS = [
+        "Keep your temper in check. One harsh word can undo a long friendship.",
+        "Do not make promises you have not thought through.",
+        "Be careful of strangers online and on the phone.",
+        "Take extra care when travelling. Do not rush.",
+        "Do not trust rumours. Verify before you believe.",
+        "You may forget something important. Check twice before leaving home.",
+        "Overconfidence may lead to a mistake today.",
+        "Keep your private matters private."
+    ];
 
-            htmlContent += `
-                <div style="background: #fdfbf7; border: 1px solid #000; padding: 12px; border-left: 4px solid #000; box-shadow: 2px 2px 0px rgba(0,0,0,0.8);">
-                    <h3 style="border-bottom: 1px solid #000; padding-bottom: 4px; font-family: 'Times New Roman', Times, serif; text-transform: uppercase; margin: 0 0 8px 0; font-size: 1.05rem;">
-                        ${signObj.symbol} &nbsp; ${signObj.name}
-                    </h3>
-                    <p style="font-size: 0.9rem; text-align: justify; line-height: 1.5; margin: 0; font-family: 'Times New Roman', Times, serif; font-style: italic;">
-                        "${predictionText}"
-                    </p>
-                </div>
-            `;
-        });
+    var MOOD_LABELS = { 1: "A hard day", 2: "A cautious day", 3: "A mixed day", 4: "A good day", 5: "A splendid day" };
 
-        gridContainer.innerHTML = htmlContent;
+    var COLORS = [
+        { n: "Red", h: "#c0392b" }, { n: "Blue", h: "#2563eb" }, { n: "Green", h: "#2e8b57" },
+        { n: "Yellow", h: "#e0b400" }, { n: "Orange", h: "#e67e22" }, { n: "Purple", h: "#7e3fa8" },
+        { n: "Pink", h: "#e75a9a" }, { n: "White", h: "#f5f5f5" }, { n: "Black", h: "#222222" },
+        { n: "Sky blue", h: "#5bc0de" }, { n: "Brown", h: "#8b5a2b" }, { n: "Grey", h: "#888888" }
+    ];
+
+    var LUCKY_TIMES = ["6 – 8 AM", "8 – 10 AM", "10 AM – 12 PM", "12 – 2 PM", "2 – 4 PM", "4 – 6 PM", "6 – 8 PM", "8 – 10 PM"];
+    var DIRECTIONS = ["East", "West", "North", "South", "North-east", "South-west"];
+
+    // Same result for everyone on the same day
+    function makeRng(seed) {
+        var a = seed >>> 0;
+        return function () {
+            a = (a + 0x6D2B79F5) | 0;
+            var t = Math.imul(a ^ (a >>> 15), 1 | a);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
     }
 
-    window.onload = function() {
-        loadAutomaticHoroscope();
+    // Today's date in Bangladesh time
+    function getDhakaToday() {
+        var s = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
+        var p = s.split('-');
+        return { y: +p[0], m: +p[1], d: +p[2] };
+    }
+
+    // weights = [good, mid, bad]
+    var TONE_WEIGHTS = {
+        1: [0.05, 0.25, 0.70],
+        2: [0.10, 0.40, 0.50],
+        3: [0.25, 0.45, 0.30],
+        4: [0.55, 0.35, 0.10],
+        5: [0.80, 0.18, 0.02]
     };
+
+    function pickTone(rating, r) {
+        var w = TONE_WEIGHTS[rating];
+        if (r < w[0]) return "good";
+        if (r < w[0] + w[1]) return "mid";
+        return "bad";
+    }
+
+    // ---------- Moon phase (approximate, about +/- 1 day) ----------
+    var SYNODIC = 29.530588853;
+    var NEW_MOON_REF = Date.UTC(2000, 0, 6, 18, 14);
+
+    function getMoon() {
+        var age = ((Date.now() - NEW_MOON_REF) / 86400000) % SYNODIC;
+        if (age < 0) age += SYNODIC;
+        var illum = Math.round((1 - Math.cos(2 * Math.PI * age / SYNODIC)) / 2 * 100);
+
+        var phases = [
+            { max: 1.85,  icon: "🌑", name: "New moon", tip: "A quiet time before a fresh start. Plan today, do not rush." },
+            { max: 5.54,  icon: "🌒", name: "Waxing crescent", tip: "The moon is growing. A good time for small new beginnings." },
+            { max: 9.23,  icon: "🌓", name: "First quarter", tip: "Time to decide. Push forward what has been stuck." },
+            { max: 12.92, icon: "🌔", name: "Waxing gibbous", tip: "Momentum builds. Make your final preparations." },
+            { max: 16.61, icon: "🌕", name: "Full moon", tip: "Emotions may run high. Do not decide in haste." },
+            { max: 20.30, icon: "🌖", name: "Waning gibbous", tip: "Let go of what is not working. Be thankful for what you have." },
+            { max: 23.99, icon: "🌗", name: "Last quarter", tip: "A day for tidying up and forgiving. Settle old accounts." },
+            { max: 27.68, icon: "🌘", name: "Waning crescent", tip: "A time to rest and prepare for the next cycle." },
+            { max: 99,    icon: "🌑", name: "New moon", tip: "A quiet time before a fresh start. Plan today, do not rush." }
+        ];
+
+        var phase = phases[phases.length - 1];
+        for (var i = 0; i < phases.length; i++) {
+            if (age < phases[i].max) { phase = phases[i]; break; }
+        }
+
+        return {
+            icon: phase.icon, name: phase.name, tip: phase.tip, illum: illum,
+            day: Math.floor(age) + 1,
+            toFull: Math.round((SYNODIC / 2 - age + SYNODIC) % SYNODIC),
+            toNew: Math.round((SYNODIC - age) % SYNODIC)
+        };
+    }
+
+    function renderMoon() {
+        var box = document.getElementById('moonBox');
+        if (!box) return;
+        var m = getMoon();
+        box.innerHTML =
+            '<div class="rt-moon">' +
+                '<div class="big">' + m.icon + '</div>' +
+                '<p><b>Tonight\'s moon: ' + m.name + '</b></p>' +
+                '<p>Moon age about ' + m.day + ' days &middot; about ' + m.illum + '% lit</p>' +
+                '<p>Next full moon in about ' + m.toFull + ' days &middot; next new moon in about ' + m.toNew + ' days</p>' +
+                '<p><i>' + m.tip + '</i></p>' +
+                '<p class="tiny">Moon data is calculated and may be off by about a day. The horoscope is for entertainment only.</p>' +
+            '</div>';
+    }
+
+    // ---------- Horoscope ----------
+    function buildSign(sign, index, dayNumber) {
+        var rng = makeRng(dayNumber * 131 + index * 977 + 13);
+
+        var ratingBag = [1, 2, 2, 3, 3, 3, 4, 4, 5];
+        var rating = ratingBag[Math.floor(rng() * ratingBag.length)];
+
+        // Outlook line that comes before the love section
+        var leadTone = rating >= 4 ? "good" : (rating === 3 ? "mid" : "bad");
+        var leadPool = LEADS[leadTone];
+        var lead = leadPool[(dayNumber + index * 7) % leadPool.length];
+
+        var lines = CATEGORIES.map(function (cat, ci) {
+            var tone = pickTone(rating, rng());
+            var pool = POOLS[cat][tone];
+            var idx = (dayNumber + index * 5 + ci * 3) % pool.length;
+            return { icon: POOLS[cat].icon, label: POOLS[cat].label, text: pool[idx] };
+        });
+
+        var caution = CAUTIONS[(dayNumber + index * 3) % CAUTIONS.length];
+        var color = COLORS[Math.floor(rng() * COLORS.length)];
+        var number = 1 + Math.floor(rng() * 50);
+        var time = LUCKY_TIMES[Math.floor(rng() * LUCKY_TIMES.length)];
+        var dir = DIRECTIONS[Math.floor(rng() * DIRECTIONS.length)];
+
+        var stars = "";
+        for (var s = 1; s <= 5; s++) stars += (s <= rating ? "★" : "☆");
+
+        return (
+            '<div class="rt-card">' +
+                '<h3>' + sign.symbol + ' ' + sign.name + '</h3>' +
+                '<p class="rt-dates">' + sign.dates + '</p>' +
+                '<span class="rt-stamp"><span class="st">' + stars + '</span>' + MOOD_LABELS[rating] + '</span>' +
+                '<p class="rt-lead' + (leadTone === "bad" ? ' neg' : '') + '">' + lead + '</p>' +
+                lines.map(function (l) {
+                    return '<p class="rt-line"><b>' + l.icon + ' ' + l.label + ':</b> ' + l.text + '</p>';
+                }).join('') +
+                '<p class="rt-warn"><b>⚠ Caution for today:</b> ' + caution + '</p>' +
+                '<div class="rt-lucky">' +
+                    '<div><b>Lucky colour:</b> <span class="rt-dot" style="background:' + color.h + ';"></span>' + color.n + '</div>' +
+                    '<div><b>Lucky number:</b> ' + number + '</div>' +
+                    '<div><b>Lucky time:</b> ' + time + '</div>' +
+                    '<div><b>Lucky direction:</b> ' + dir + '</div>' +
+                '</div>' +
+            '</div>'
+        );
+    }
+
+    function loadHoroscope() {
+        var grid = document.getElementById('horoscopeGrid');
+        var dateTop = document.getElementById('horoscope-date-top');
+        if (!grid) return;
+
+        var t = getDhakaToday();
+        var dayNumber = Math.floor(Date.UTC(t.y, t.m - 1, t.d) / 86400000);
+
+        if (dateTop) {
+            var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+            dateTop.textContent = "Issue of " + months[t.m - 1] + " " + t.d + ", " + t.y;
+        }
+
+        renderMoon();
+
+        var html = "";
+        signs.forEach(function (sign, index) {
+            html += buildSign(sign, index, dayNumber);
+        });
+        grid.innerHTML = html;
+    }
+
+    document.addEventListener('DOMContentLoaded', loadHoroscope);
+})();
 </script>
 
 </body>
