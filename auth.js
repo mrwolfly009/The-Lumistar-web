@@ -1,15 +1,40 @@
-// --- Lumistar Authentication System (Updated with Secret Code) ---
+// --- Lumistar Authentication System v2 ---
 
-// ফাংশনের বাইরে ডাটাবেজ ভেরিয়েবল রাখা অনেক সময় এরর দেয়, 
-// তাই আমরা ফাংশনের ভেতরে এটি কল করবো।
+// SHA-256 hashes of the secret codes (not the codes themselves)
+const ADMIN_CODE_HASH  = "42cee7a78483609536483f7ccf6f393425e5f0305b7050903ca6d523e20d276d";
+const JUNIOR_CODE_HASH = "0db78dbffd6a901db82e5fd73ef315d1fa4f82190fd183f38813e3d4e609d4fb";
 
-// আপনার সিক্রেট জার্নালিস্ট কোড (প্রয়োজনে এটি পরিবর্তন করে নিতে পারেন)
-const VALID_SECRET_CODE = "###8080990033###"; 
+// Can Admin delete any journalist's news? (true / false)
+const ADMIN_CAN_DELETE_ALL = true;
 
-function handleAuth(type) {
-    // ১. ডাটাবেজ কানেকশন নিশ্চিত করা
+// ---------- Helpers ----------
+async function sha256(text) {
+    const data = new TextEncoder().encode(text);
+    const buf = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(buf))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function makeSalt() {
+    const arr = new Uint8Array(16);
+    crypto.getRandomValues(arr);
+    return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Firebase keys cannot contain . # $ [ ] /
+function makeKey(name) {
+    return name.replace(/[.#$\[\]\/]/g, '_');
+}
+
+// ---------- Main login / register ----------
+async function handleAuth(type) {
+    if (!window.crypto || !window.crypto.subtle) {
+        alert("Ei browser-e secure login kaj korbe na. Link ta https:// diye kholo.");
+        return;
+    }
+
     const db = firebase.database();
-    
+
     const nameInput = document.getElementById('uName');
     const passInput = document.getElementById('uPass');
     const secretCodeInput = document.getElementById('uSecretCode');
@@ -17,96 +42,181 @@ function handleAuth(type) {
 
     if (!nameInput) return;
 
-    // নাম থেকে ডট (.) বাদ দেওয়া (Firebase ডট সাপোর্ট করে না কি হিসেবে)
     const rawName = nameInput.value.trim();
-    const name = rawName.replace(/\./g, '_'); 
-    
+    const key = makeKey(rawName);
     const pass = passInput ? passInput.value : "";
-    const enteredSecretCode = secretCodeInput ? secretCodeInput.value.trim() : "";
+    const code = secretCodeInput ? secretCodeInput.value.trim() : "";
     const isJournalist = jRadio ? jRadio.checked : false;
-    const role = isJournalist ? 'journalist' : 'viewer';
 
-    if (!name) {
+    if (!rawName) {
         alert("Oi! Name toh likho agey.");
         return;
     }
+    if (isJournalist && !pass) {
+        alert("Journalist-er jonno Password dite hobe.");
+        return;
+    }
 
-    // --- REGISTRATION LOGIC ---
-    if (type === 'register') {
-        // যদি জার্নালিস্ট হিসেবে রেজিস্টার করতে চায়, তবে সিক্রেট কোড চেক করতে হবে
-        if (isJournalist) {
-            if (enteredSecretCode !== VALID_SECRET_CODE) {
-                alert("❌ Vul Secret Journalist Code! Apni journalist hishabe register korte parben na.");
-                return;
+    try {
+        if (type === 'register') {
+            await registerUser(db, key, rawName, pass, code, isJournalist);
+        } else if (type === 'login') {
+            await loginUser(db, key, rawName, pass, isJournalist);
+        }
+    } catch (err) {
+        console.error("Auth Error:", err);
+        alert("Database Error! Rules check koro.");
+    }
+}
+
+// ---------- Registration ----------
+async function registerUser(db, key, rawName, pass, code, isJournalist) {
+    const newUser = {
+        name: rawName,
+        role: 'viewer',
+        journalistRole: '',
+        joinedAt: Date.now()
+    };
+
+    if (isJournalist) {
+        if (pass.length < 6) {
+            alert("Password kompokkhe 6 okkhor hote hobe.");
+            return;
+        }
+
+        const codeHash = await sha256(code);
+        if (codeHash === ADMIN_CODE_HASH) {
+            newUser.journalistRole = 'admin';
+        } else if (codeHash === JUNIOR_CODE_HASH) {
+            newUser.journalistRole = 'junior';
+        } else {
+            alert("❌ Vul Secret Journalist Code! Apni journalist hishabe register korte parben na.");
+            return;
+        }
+
+        newUser.role = 'journalist';
+        newUser.salt = makeSalt();
+        newUser.passwordHash = await sha256(newUser.salt + ':' + pass);
+    }
+
+    // Transaction: only create if the name is not taken
+    const result = await db.ref('users/' + key).transaction(current => {
+        return current === null ? newUser : undefined;
+    });
+
+    if (result.committed) {
+        alert("Registration Successful! Ebar LOGIN-e click koro.");
+    } else {
+        alert("Eii nam-e agei account ache! Login koro.");
+    }
+}
+
+// ---------- Login ----------
+async function loginUser(db, key, rawName, pass, isJournalist) {
+    const snapshot = await db.ref('users/' + key).once('value');
+    const userData = snapshot.val();
+
+    if (!userData) {
+        alert("User khunje paoa jayni! Agey Register koro.");
+        return;
+    }
+
+    const expectedRole = isJournalist ? 'journalist' : 'viewer';
+    if (userData.role !== expectedRole) {
+        alert("Password ba Role vul hoyeche!");
+        return;
+    }
+
+    if (userData.role === 'journalist') {
+        let ok = false;
+
+        if (userData.passwordHash) {
+            ok = (await sha256(userData.salt + ':' + pass)) === userData.passwordHash;
+        } else if (userData.password !== undefined) {
+            // Old account with plain-text password: check, then upgrade to hash
+            ok = (userData.password === pass);
+            if (ok) {
+                const salt = makeSalt();
+                await db.ref('users/' + key).update({
+                    salt: salt,
+                    passwordHash: await sha256(salt + ':' + pass),
+                    password: null
+                });
             }
         }
 
-        db.ref('users/' + name).once('value', (snapshot) => {
-            if (snapshot.exists()) {
-                alert("Eii nam-e agei account ache! Login koro.");
-            } else {
-                db.ref('users/' + name).set({
-                    password: pass,
-                    role: role,
-                    joinedAt: Date.now()
-                }).then(() => {
-                    alert("Registration Successful! Ebar LOGIN-e click koro.");
-                }).catch(err => {
-                    console.error("Reg Error:", err);
-                    alert("Database Error! Rules check koro.");
-                });
-            }
-        });
-    } 
-    
-    // --- LOGIN LOGIC ---
-    else if (type === 'login') {
-        db.ref('users/' + name).once('value', (snapshot) => {
-            const userData = snapshot.val();
-            
-            if (!userData) {
-                alert("User khunje paoa jayni! Agey Register koro.");
-                return;
-            }
+        if (!ok) {
+            alert("Password ba Role vul hoyeche!");
+            return;
+        }
+    }
 
-            // যদি ডেটাবেজের রোল এবং ইউজারের সিলেক্ট করা রোল মিলে যায়
-            if (userData.password === pass && userData.role === role) {
-                
-                // অতিরিক্ত সুরক্ষা: লগইন করার সময়ও কেউ যদি জার্নালিস্ট হিসেবে ঢুকতে চায়, সে হ্যাক করে ঢুকতে পারবে না যদি ডাটাবেজে তার রোল 'journalist' না থাকে।
-                if (isJournalist && userData.role !== 'journalist') {
-                    alert("Apnar ei account-ti journalist role-er noy!");
-                    return;
-                }
+    // Save session
+    try {
+        localStorage.setItem('currentUser', userData.name || rawName);
+        localStorage.setItem('currentUserKey', key);
+        localStorage.setItem('userRole', userData.role);
+        if (userData.role === 'journalist') {
+            localStorage.setItem('journalistRole', userData.journalistRole || 'junior');
+        } else {
+            localStorage.removeItem('journalistRole');
+        }
+    } catch (e) {
+        alert("Browser storage kaj korche na. Private mode bondho kore abar chesta koro.");
+        return;
+    }
 
-                localStorage.setItem('currentUser', rawName);
-                localStorage.setItem('userRole', role);
-                
-                // গিটহাবের জন্য পাথ সেফ রিডাইরেক্ট
-                if (role === 'journalist') {
-                    window.location.replace("journalist.html");
-                } else {
-                    window.location.replace("viewer.html");
-                }
-            } else {
-                alert("Password ba Role vul hoyeche!");
-            }
-        });
+    window.location.replace(userData.role === 'journalist' ? "journalist.html" : "viewer.html");
+}
+
+// ---------- Session helpers ----------
+function getSession() {
+    try {
+        return {
+            user: localStorage.getItem('currentUser'),
+            key: localStorage.getItem('currentUserKey'),
+            role: localStorage.getItem('userRole'),
+            journalistRole: localStorage.getItem('journalistRole')
+        };
+    } catch (e) {
+        return { user: null, key: null, role: null, journalistRole: null };
     }
 }
 
-// Logout Function
+// Call at the top of a page: requireLogin(['journalist']) or requireLogin()
+function requireLogin(allowedRoles) {
+    const s = getSession();
+    const roleOk = !allowedRoles || allowedRoles.includes(s.role);
+    if (!s.user || !s.role || !roleOk) {
+        window.location.replace("login.html");
+        return false;
+    }
+    return true;
+}
+
+function isAdmin() {
+    const s = getSession();
+    return s.role === 'journalist' && s.journalistRole === 'admin';
+}
+
+// Can the current user delete a news item written by authorKey?
+function canDeleteNews(authorKey) {
+    const s = getSession();
+    if (s.role !== 'journalist') return false;
+    if (ADMIN_CAN_DELETE_ALL && s.journalistRole === 'admin') return true;
+    if (!authorKey) return false;
+    return authorKey === s.key;
+}
+
+// ---------- Logout ----------
 function logout() {
     if (confirm("Are you sure?")) {
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('userRole');
+        try {
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('currentUserKey');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('journalistRole');
+        } catch (e) {}
         window.location.replace("login.html");
     }
-}
-
-function togglePass(show) {
-    const passArea = document.getElementById('passArea');
-    const secretCodeArea = document.getElementById('secretCodeArea');
-    
-    if (passArea) passArea.style.display = show ? 'block' : 'none';
-    if (secretCodeArea) secretCodeArea.style.display = show ? 'block' : 'none';
 }
