@@ -1,26 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Lumistar - Redirecting...</title>
+    <meta name="description" content="The Lumistar - Truth, Transparency, and the Digital Age">
+
     <!-- Google Search Console Verification Tag -->
     <meta name="google-site-verification" content="8isqEGDbrM4ynD05h8CEb67VDJ-3Cwl0uOhr-TRMCKg" />
+
     <!-- Website Favicon / Logo -->
     <link rel="icon" type="image/jpeg" href="logo.jpg">
+
+    <!-- If JavaScript is off, go to login -->
+    <noscript>
+        <meta http-equiv="refresh" content="0; url=login.html">
+    </noscript>
+
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Georgia, serif;
+            background: #f4f1ea;
+            color: #222;
+            text-align: center;
+        }
+        a { color: inherit; }
+    </style>
 </head>
 <body>
-  
+    <p>
+        Loading The Lumistar...<br>
+        <small><a href="login.html">Click here if you are not redirected</a></small>
+    </p>
+
     <script>
-    const user = localStorage.getItem('currentUser');
-    const role = localStorage.getItem('userRole');
+    (function () {
+        var user = null;
+        var role = null;
 
-    if (user && role) {
-        window.location.replace(role === 'journalist' ? "journalist.html" : "viewer.html");
-    } else {
-        window.location.replace("login.html");
-    }
+        try {
+            user = localStorage.getItem('currentUser');
+            role = localStorage.getItem('userRole');
+        } catch (e) {
+            // localStorage not available, go to login
+        }
+
+        var target = "login.html";
+
+        if (user && (role === 'journalist' || role === 'viewer')) {
+            target = (role === 'journalist') ? "journalist.html" : "viewer.html";
+        }
+
+        window.location.replace(target);
+    })();
     </script>
-
 </body>
 </html>
