@@ -1,12 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="auth-pending">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Lumistar - Viewer Mode</title>
+
+    <!-- Hide the page until login is verified -->
+    <style>
+        html.auth-pending body { visibility: hidden; }
+    </style>
+
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="icon" type="image/jpeg" href="logo.jpg">
+
+    <!-- Login guard: any logged-in user (viewer or journalist) can stay -->
+    <script src="auth.js"></script>
+    <script>
+        (function () {
+            if (requireLogin()) {
+                document.documentElement.classList.remove('auth-pending');
+            }
+        })();
+    </script>
 </head>
 <body>
 
@@ -19,20 +35,20 @@
 
 <div id="weather-widget">
     <span id="temp">--°C</span>
-    <i id="weather-icon-font" class="fa-solid fa-cloud"></i> 
+    <i id="weather-icon-font" class="fa-solid fa-cloud"></i>
     <span id="condition">Loading...</span>
 </div>
 
     <header class="masthead">
         <h1 style="text-align: center; font-size: 3.5rem; margin: 10px 0;">THE LUMISTAR</h1>
-        
+
         <!-- Rotating Ads Banner with External Top-Right Countdown -->
         <div style="width: 100%; margin: 15px 0; position: relative;">
             <!-- Countdown Box (Outside & Top-Right of the ad box) -->
             <div style="display: flex; justify-content: flex-end; margin-bottom: 0;">
                 <span id="adCountdown" style="background: #000; color: #fff; font-size: 0.7rem; padding: 2px 8px; font-family: monospace; font-weight: bold; border-radius: 3px 3px 0 0; border: 1px solid #000; border-bottom: none;">15s</span>
             </div>
-            
+
             <!-- Ad Box -->
             <div id="adBannerContainer" style="margin: 0; border: 1px solid #000; background: #fdfbf7; padding: 10px; text-align: center; box-shadow: 2px 2px 0px rgba(0,0,0,0.8); display: none;">
                 <div id="adContentWrapper"></div>
@@ -41,7 +57,7 @@
 
         <div class="date-line" id="liveDateDisplay">VOL. XCIV... No. 31,102 — LOADING...</div>
 
-<!-- Horoscope Navigation Button (Added Here) -->
+<!-- Horoscope Navigation Button -->
 <div style="text-align: center; margin: 8px 0 15px 0; font-family: serif;">
     <a href="horoscope.html" style="font-size: 0.8rem; font-weight: bold; color: #000; text-decoration: none; background: #f2e9d2; border: 1px solid #000; padding: 4px 12px; display: inline-block; box-shadow: 2px 2px 0px rgba(0,0,0,0.8); text-transform: uppercase;">
         ★ Read Daily Horoscope (রাশিফল) ★
@@ -92,28 +108,19 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<script src="auth.js"></script>
+<!-- auth.js is already loaded in <head>, so only script.js here -->
 <script src="script.js"></script>
 
+<!-- Live date -->
 <script>
-    // Security Check: Keu login na kore thakle direct login page-e pathiye debe
-    const currentUser = localStorage.getItem('currentUser');
-    if (!currentUser) {
-        alert("❌ Access Denied! Prothome login koro.");
-        window.location.replace("login.html");
-    }
-</script>
-
-<script>
-    // ডেট ডিসপ্লে ঠিক রাখার কোড
-    const now = new Date();
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const dateElem = document.getElementById('liveDateDisplay');
-    if(dateElem) dateElem.innerText = `VOL. XCIV... No. 31,102 — ${now.toLocaleDateString('en-US', options).toUpperCase()}`;
-
-    if (typeof listenBreaking === "function") {
-        listenBreaking();
-    }
+    (function () {
+        var today = new Date();
+        var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        var dateElem = document.getElementById('liveDateDisplay');
+        if (dateElem) {
+            dateElem.innerText = 'VOL. XCIV... No. 31,102 — ' + today.toLocaleDateString('en-US', options).toUpperCase();
+        }
+    })();
 </script>
 
 </body>
