@@ -26,6 +26,10 @@
 </head>
 <body>
 
+<noscript>
+    <p style="text-align:center; padding:20px;">Please enable JavaScript to use The Lumistar.</p>
+</noscript>
+
 <div class="login-wrapper">
     <div class="login-box">
         <header class="masthead">
@@ -33,22 +37,22 @@
         </header>
 
         <p style="text-align:center; font-style: italic; font-size: 0.9rem;">Please identify yourself to enter the portal.</p>
-        
+
         <div style="margin-bottom: 15px;">
-            <label style="font-weight:bold; display:block; margin-bottom:5px;">Name</label>
-            <input type="text" id="uName" placeholder="Enter your name" style="width:100%; padding:10px; border:1px solid #000; box-sizing:border-box;">
+            <label for="uName" style="font-weight:bold; display:block; margin-bottom:5px;">Name</label>
+            <input type="text" id="uName" placeholder="Enter your name" maxlength="40" autocomplete="username" style="width:100%; padding:10px; border:1px solid #000; box-sizing:border-box;">
         </div>
 
         <!-- Password Area (Journalist Only) -->
         <div id="passArea" style="display:none; margin-bottom: 15px;">
-            <label style="font-weight:bold; display:block; margin-bottom:5px;">Password (Journalist Only)</label>
-            <input type="password" id="uPass" placeholder="••••••••" style="width:100%; padding:10px; border:1px solid #000; box-sizing:border-box;">
+            <label for="uPass" style="font-weight:bold; display:block; margin-bottom:5px;">Password (Journalist Only)</label>
+            <input type="password" id="uPass" placeholder="••••••••" maxlength="64" autocomplete="current-password" style="width:100%; padding:10px; border:1px solid #000; box-sizing:border-box;">
         </div>
 
-        <!-- Secret Invitation Code Area (New Added for Security) -->
+        <!-- Secret Invitation Code Area -->
         <div id="secretCodeArea" style="display:none; margin-bottom: 15px;">
-            <label style="font-weight:bold; display:block; margin-bottom:5px; color: #d97706;">Secret Journalist Code</label>
-            <input type="password" id="uSecretCode" placeholder="Enter secret code" style="width:100%; padding:10px; border:1px dashed #d97706; box-sizing:border-box; background: #fffbeb;">
+            <label for="uSecretCode" style="font-weight:bold; display:block; margin-bottom:5px; color: #d97706;">Secret Journalist Code</label>
+            <input type="password" id="uSecretCode" placeholder="Enter secret code" maxlength="64" autocomplete="off" style="width:100%; padding:10px; border:1px dashed #d97706; box-sizing:border-box; background: #fffbeb;">
         </div>
 
         <div style="border: 1px dashed #000; padding: 12px; margin-bottom: 20px; text-align:center; background: rgba(0,0,0,0.05);">
@@ -62,15 +66,15 @@
 
         <div style="display: flex; gap: 10px; flex-direction: column; margin-top: 10px;">
             <div style="display: flex; gap: 10px;">
-                <button onclick="handleAuth('login')" style="flex:1; background:#000; color:#fff; padding:12px; cursor:pointer; font-weight:bold; border:none; text-transform:uppercase;">LOGIN</button>
-                <button onclick="handleAuth('register')" style="flex:1; background:#fff; color:#000; border:1px solid #000; padding:12px; cursor:pointer; font-weight:bold; text-transform:uppercase;">REGISTER</button>
+                <button type="button" onclick="handleAuth('login')" style="flex:1; background:#000; color:#fff; padding:12px; cursor:pointer; font-weight:bold; border:none; text-transform:uppercase;">LOGIN</button>
+                <button type="button" onclick="handleAuth('register')" style="flex:1; background:#fff; color:#000; border:1px solid #000; padding:12px; cursor:pointer; font-weight:bold; text-transform:uppercase;">REGISTER</button>
             </div>
-            
-            <button onclick="exitPortal()" style="width:100%; background:transparent; color:red; border:1px solid red; padding:8px; cursor:pointer; font-size: 0.8rem; font-weight:bold; text-transform:uppercase;">
+
+            <button type="button" onclick="exitPortal()" style="width:100%; background:transparent; color:red; border:1px solid red; padding:8px; cursor:pointer; font-size: 0.8rem; font-weight:bold; text-transform:uppercase;">
                 EXIT
             </button>
         </div>
-        
+
         <p style="text-align:center; font-size: 0.7rem; margin-top: 15px; color: #555;">
             * Journalist access is restricted to authorized personnel only.
         </p>
@@ -90,7 +94,7 @@
     messagingSenderId: "343793935025",
     appId: "1:343793935025:web:fd92cd889c72f8ebb17890"
   };
-  
+
   if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
   }
@@ -102,7 +106,7 @@
     function togglePass(show) {
         const passArea = document.getElementById('passArea');
         const secretCodeArea = document.getElementById('secretCodeArea');
-        
+
         if (passArea) passArea.style.display = show ? 'block' : 'none';
         if (secretCodeArea) secretCodeArea.style.display = show ? 'block' : 'none';
     }
@@ -112,6 +116,21 @@
             window.location.href = "https://www.google.com/";
         }
     }
+
+    // Fix: browser may restore the Journalist radio after refresh/back
+    document.addEventListener('DOMContentLoaded', function () {
+        const j = document.getElementById('jRadio');
+        togglePass(!!(j && j.checked));
+    });
+
+    // Press Enter in a text box to log in
+    document.addEventListener('keydown', function (e) {
+        const t = e.target;
+        if (e.key === 'Enter' && t && t.tagName === 'INPUT' && t.type !== 'radio') {
+            e.preventDefault();
+            if (typeof handleAuth === 'function') handleAuth('login');
+        }
+    });
 </script>
 </body>
 </html>
