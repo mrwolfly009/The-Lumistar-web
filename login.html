@@ -8,13 +8,13 @@
     <link rel="icon" type="image/jpeg" href="logo.jpg">
     <style>
         .login-wrapper {
-    display: flex;
-    flex-direction: column; /* লোগো আর বক্সকে নিচে নিচে (vertical) আনার জন্য */
-    align-items: center;    /* মাঝখানে রাখার জন্য */
-    justify-content: center;
-    min-height: 80vh;
-    padding: 20px;
-}
+            display: flex;
+            flex-direction: column; /* লোগো আর বক্সকে নিচে নিচে (vertical) আনার জন্য */
+            align-items: center;    /* মাঝখানে রাখার জন্য */
+            justify-content: center;
+            min-height: 80vh;
+            padding: 20px;
+        }
 
         .login-box {
             width: 100%;
@@ -53,13 +53,13 @@
             <input type="text" id="uName" placeholder="Enter your name" maxlength="40" autocomplete="username" style="width:100%; padding:10px; border:1px solid #000; box-sizing:border-box;">
         </div>
 
-        <!-- Password Area (Journalist Only) -->
-        <div id="passArea" style="display:none; margin-bottom: 15px;">
-            <label for="uPass" style="font-weight:bold; display:block; margin-bottom:5px;">Password (Journalist Only)</label>
+        <!-- Password Area (Visible for both Viewer and Journalist) -->
+        <div id="passArea" style="display:block; margin-bottom: 15px;">
+            <label for="uPass" style="font-weight:bold; display:block; margin-bottom:5px;">Password</label>
             <input type="password" id="uPass" placeholder="••••••••" maxlength="64" autocomplete="current-password" style="width:100%; padding:10px; border:1px solid #000; box-sizing:border-box;">
         </div>
 
-        <!-- Secret Invitation Code Area -->
+        <!-- Secret Invitation Code Area (Journalist Only) -->
         <div id="secretCodeArea" style="display:none; margin-bottom: 15px;">
             <label for="uSecretCode" style="font-weight:bold; display:block; margin-bottom:5px; color: #d97706;">Secret Journalist Code</label>
             <input type="password" id="uSecretCode" placeholder="Enter secret code" maxlength="64" autocomplete="off" style="width:100%; padding:10px; border:1px dashed #d97706; box-sizing:border-box; background: #fffbeb;">
@@ -117,7 +117,8 @@
         const passArea = document.getElementById('passArea');
         const secretCodeArea = document.getElementById('secretCodeArea');
 
-        if (passArea) passArea.style.display = show ? 'block' : 'none';
+        // Viewer ba Journalist je-i hok, passArea ekhon shob shomoy visible thakbe
+        if (passArea) passArea.style.display = 'block';
         if (secretCodeArea) secretCodeArea.style.display = show ? 'block' : 'none';
     }
 
