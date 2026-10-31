@@ -1,4 +1,4 @@
-// --- Lumistar Authentication System v2 ---
+// --- Lumistar Authentication System v2 (Updated with Viewer Passwords) ---
 
 // SHA-256 hashes of the secret codes (not the codes themselves)
 const ADMIN_CODE_HASH  = "42cee7a78483609536483f7ccf6f393425e5f0305b7050903ca6d523e20d276d";
@@ -44,7 +44,7 @@ async function handleAuth(type) {
 
     const rawName = nameInput.value.trim();
     const key = makeKey(rawName);
-    const pass = passInput ? passInput.value : "";
+    const pass = passInput ? passInput.value.trim() : ""; // Added .trim() for clean password handling
     const code = secretCodeInput ? secretCodeInput.value.trim() : "";
     const isJournalist = jRadio ? jRadio.checked : false;
 
@@ -52,8 +52,10 @@ async function handleAuth(type) {
         alert("Oi! Name toh likho agey.");
         return;
     }
-    if (isJournalist && !pass) {
-        alert("Journalist-er jonno Password dite hobe.");
+    
+    // Updated: Ekhon Viewer ba Journalist shobar jonnoi Password dewa mandatory kora holo
+    if (!pass) {
+        alert("Password dewa mandatory! Password likho.");
         return;
     }
 
@@ -71,6 +73,12 @@ async function handleAuth(type) {
 
 // ---------- Registration ----------
 async function registerUser(db, key, rawName, pass, code, isJournalist) {
+    // Viewer-der o password thakbe, tai password length check shobar jonno প্রযোজ্য
+    if (pass.length < 6) {
+        alert("Password kompokkhe 6 okkhor hote hobe.");
+        return;
+    }
+
     const newUser = {
         name: rawName,
         role: 'viewer',
@@ -79,11 +87,6 @@ async function registerUser(db, key, rawName, pass, code, isJournalist) {
     };
 
     if (isJournalist) {
-        if (pass.length < 6) {
-            alert("Password kompokkhe 6 okkhor hote hobe.");
-            return;
-        }
-
         const codeHash = await sha256(code);
         if (codeHash === ADMIN_CODE_HASH) {
             newUser.journalistRole = 'admin';
@@ -95,9 +98,11 @@ async function registerUser(db, key, rawName, pass, code, isJournalist) {
         }
 
         newUser.role = 'journalist';
-        newUser.salt = makeSalt();
-        newUser.passwordHash = await sha256(newUser.salt + ':' + pass);
     }
+
+    // Shob user (Viewer ebong Journalist) er jonnoi salt ar password hash generate hobe
+    newUser.salt = makeSalt();
+    newUser.passwordHash = await sha256(newUser.salt + ':' + pass);
 
     // Transaction: only create if the name is not taken
     const result = await db.ref('users/' + key).transaction(current => {
@@ -107,7 +112,7 @@ async function registerUser(db, key, rawName, pass, code, isJournalist) {
     if (result.committed) {
         alert("Registration Successful! Ebar LOGIN-e click koro.");
     } else {
-        alert("Eii nam-e agei account ache! Login koro.");
+        alert("Eii nam-e agei account ache! Onno nam use koro ba login koro.");
     }
 }
 
@@ -127,28 +132,27 @@ async function loginUser(db, key, rawName, pass, isJournalist) {
         return;
     }
 
-    if (userData.role === 'journalist') {
-        let ok = false;
+    let ok = false;
 
-        if (userData.passwordHash) {
-            ok = (await sha256(userData.salt + ':' + pass)) === userData.passwordHash;
-        } else if (userData.password !== undefined) {
-            // Old account with plain-text password: check, then upgrade to hash
-            ok = (userData.password === pass);
-            if (ok) {
-                const salt = makeSalt();
-                await db.ref('users/' + key).update({
-                    salt: salt,
-                    passwordHash: await sha256(salt + ':' + pass),
-                    password: null
-                });
-            }
+    // Viewer ebong Journalist duijon user-er khetrei password hash verify kora hobe
+    if (userData.passwordHash) {
+        ok = (await sha256(userData.salt + ':' + pass)) === userData.passwordHash;
+    } else if (userData.password !== undefined) {
+        // Old account with plain-text password: check, then upgrade to hash
+        ok = (userData.password === pass);
+        if (ok) {
+            const salt = makeSalt();
+            await db.ref('users/' + key).update({
+                salt: salt,
+                passwordHash: await sha256(salt + ':' + pass),
+                password: null
+            });
         }
+    }
 
-        if (!ok) {
-            alert("Password ba Role vul hoyeche!");
-            return;
-        }
+    if (!ok) {
+        alert("Password ba Role vul hoyeche!");
+        return;
     }
 
     // Save session
