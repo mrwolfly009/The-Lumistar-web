@@ -381,9 +381,12 @@ function restoreUiState(state) {
         const el = document.getElementById(id);
         if (el) el.style.display = 'block';
     });
+    // comment-input বা reply-input ছাড়া শুধু অন্য কোনো ইনপুট থাকলে তা রিস্টোর করবে
     Object.keys(state.inputs).forEach(function (id) {
-        const el = document.getElementById(id);
-        if (el) el.value = state.inputs[id];
+        if (!id.startsWith('comment-input-') && !id.startsWith('reply-input-')) {
+            const el = document.getElementById(id);
+            if (el) el.value = state.inputs[id];
+        }
     });
     if (state.active) {
         const el = document.getElementById(state.active);
@@ -617,6 +620,7 @@ function addComment(newsId) {
         text: commentText,
         timestamp: Date.now()
     }).then(function () {
+        // Fix: Comment successfully sent hobar por input field clear kore dewa holo
         inputField.value = '';
     }).catch(function (err) {
         console.error("Comment error:", err);
@@ -648,6 +652,7 @@ function addReply(newsId, commentId) {
         text: replyText,
         timestamp: Date.now()
     }).then(function () {
+        // Fix: Reply successfully sent hobar por reply input field clear kore dewa holo
         inputField.value = '';
     }).catch(function (err) {
         console.error("Reply error:", err);
