@@ -80,9 +80,11 @@
                 <button type="button" onclick="handleAuth('register')" style="flex:1; background:#fff; color:#000; border:1px solid #000; padding:12px; cursor:pointer; font-weight:bold; text-transform:uppercase;">REGISTER</button>
             </div>
 
-            <button type="button" onclick="exitPortal()" style="width:100%; background:transparent; color:red; border:1px solid red; padding:8px; cursor:pointer; font-size: 0.8rem; font-weight:bold; text-transform:uppercase;">
-                EXIT
-            </button>
+            <!-- EXIT button-er jaigay ei button-ti bosaben -->
+<button type="button" onclick="enterAsGuest()" style="width:100%; background:transparent; color:#000; border:1px solid #000; padding:8px; cursor:pointer; font-size: 0.8rem; font-weight:bold; text-transform:uppercase;">
+    ENTER AS GUEST
+</button>
+
         </div>
 
         <p style="text-align:center; font-size: 0.7rem; margin-top: 15px; color: #555;">
@@ -122,11 +124,15 @@
         if (secretCodeArea) secretCodeArea.style.display = show ? 'block' : 'none';
     }
 
-    function exitPortal() {
-        if (confirm("Are you sure you want to exit The Lumistar?")) {
-            window.location.href = "https://www.google.com/";
-        }
-    }
+    function enterAsGuest() {
+    try {
+        localStorage.setItem('currentUser', 'Guest');
+        localStorage.setItem('currentUserKey', 'guest_user');
+        localStorage.setItem('userRole', 'guest');
+        localStorage.removeItem('journalistRole');
+    } catch (e) {}
+    window.location.replace("viewer.html");
+}
 
     // Fix: browser may restore the Journalist radio after refresh/back
     document.addEventListener('DOMContentLoaded', function () {
