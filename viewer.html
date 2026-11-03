@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Lumistar - Viewer Mode</title>
+    <title>The Lumistar - Viewer </title>
 
     <!-- Hide the page until login is verified -->
     <style>
@@ -56,6 +56,23 @@
         </div>
 
         <div class="date-line" id="liveDateDisplay">VOL. XCIV... No. 31,102 — LOADING...</div>
+
+      <!-- Search & Filter Bar UI -->
+<div style="display: flex; gap: 8px; margin: 15px 0; align-items: center;">
+    <input type="text" id="searchInput" oninput="handleSearchFilter()" placeholder="Search news by keywords..." 
+           style="flex: 1; padding: 8px 12px; border: 1px solid #000; font-family: inherit; font-size: 0.85rem; background: #fff;">
+    
+    <select id="filterSelect" onchange="handleSearchFilter()" 
+        style="padding: 8px 10px; border: 1px solid #000; font-family: inherit; font-size: 0.85rem; background: #fdfbf7; font-weight: bold; cursor: pointer;">
+    <option value="alltime">★ For You </option>
+    <option value="latest">Date-wise (Latest)</option>
+    <option value="oldest">Date-wise (Oldest)</option>
+    <option value="upvotes">Most Upvotes</option>
+    <option value="downvotes">Most Downvotes</option>
+    <option value="commented">Most Commented</option>
+</select>
+
+</div>
 
 <!-- Horoscope Navigation Button -->
 <div style="text-align: center; margin: 8px 0 15px 0; font-family: serif;">
