@@ -24,7 +24,7 @@ function lumiStorageGet(k) {
 const currentUser = lumiStorageGet('currentUser') || 'Anonymous';
 const journalistRole = lumiStorageGet('journalistRole') || 'junior';
 const lumiRole = lumiStorageGet('userRole') || '';
-const lumiUserKey = lumiStorageGet('currentUserKey`') || currentUser.replace(/[.#$\[\]\/]/g, '_');
+const lumiUserKey = lumiStorageGet('currentUserKey') || currentUser.replace(/[.#$\[\]\/]/g, '_');
 
 const LUMI_LIMITS = { title: 200, content: 10000, comment: 500, reply: 300, breaking: 200, byline: 40 };
 
@@ -167,7 +167,6 @@ function publish() {
         return;
     }
 
-    // Byline: hidden -> no name | typed name | login name
     let byline = currentUser;
     if (hideCheck && hideCheck.checked) {
         byline = '';
@@ -197,8 +196,8 @@ function publish() {
 
 function saveToFirebase(reporter, title, imgSource, content, btnElement, originalText) {
     db.ref('news_portal').push({
-        reporter: reporter,          // name shown on the page ('' = hidden)
-        authorKey: lumiUserKey,      // real writer, used for delete protection
+        reporter: reporter,
+        authorKey: lumiUserKey,
         authorName: currentUser,
         title: title,
         img: imgSource,
@@ -292,7 +291,7 @@ function saveAdToFirebase(title, imgSrc, btnElement, originalText) {
     });
 }
 
-// Ads rotation and countdown (one timer only)
+// Ads rotation and countdown
 const AD_SECONDS = 15;
 let adsList = [];
 let currentAdIndex = 0;
@@ -356,8 +355,7 @@ function showCurrentAd() {
 // 3. Who can delete a news item?
 function canDelete(item) {
     if (lumiRole !== 'journalist') return false;
-    if (item.authorKey) return canDeleteNews(item.authorKey);        // from auth.js
-    // Old posts without authorKey: Admin (if allowed) or same name
+    if (item.authorKey) return canDeleteNews(item.authorKey);
     if (ADMIN_CAN_DELETE_ALL && isAdmin()) return true;
     return item.reporter === currentUser;
 }
@@ -393,7 +391,32 @@ function restoreUiState(state) {
     }
 }
 
-// Global Search & Filter handler trigger
+// --- Custom Dropdown & Search Handlers ---
+let currentFilterVal = 'alltime';
+
+function openCustomDropdown(e) {
+    if (e) e.stopPropagation();
+    const list = document.getElementById('customDropdownList');
+    if (!list) return;
+    list.style.display = (list.style.display === 'block') ? 'none' : 'block';
+}
+
+document.addEventListener('click', function() {
+    const list = document.getElementById('customDropdownList');
+    if (list) list.style.display = 'none';
+});
+
+function selectFilter(val, label) {
+    currentFilterVal = val;
+    const btnText = document.getElementById('filterBtnText');
+    if (btnText) btnText.innerText = label;
+    
+    const list = document.getElementById('customDropdownList');
+    if (list) list.style.display = 'none';
+
+    render();
+}
+
 function handleSearchFilter() {
     render();
 }
@@ -406,10 +429,8 @@ function render() {
     const isJournalistPage = !!document.getElementById('tInput');
 
     const searchInput = document.getElementById('searchInput');
-    const filterSelect = document.getElementById('filterSelect');
-    
     const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
-    const filterVal = filterSelect ? filterSelect.value : 'alltime';
+    const filterVal = currentFilterVal;
 
     db.ref('news_portal').on('value', function (snapshot) {
         const data = snapshot.val();
@@ -442,14 +463,13 @@ function render() {
                 commentCount: commentCount
             });
 
-        // --- SEARCH FILTERING ---
+            // --- SEARCH FILTERING ---
             if (query) {
                 const titleText = (newsItem.title || '').toLowerCase();
                 const contentText = (newsItem.content || '').toLowerCase();
                 const reporterText = (newsItem.reporter || '').toLowerCase();
                 const fullBylineText = ('reported by ' + reporterText).toLowerCase();
 
-                // Headline, content, ba reporter name (ba "reported by name") match korle show korbe
                 if (!titleText.includes(query) && !contentText.includes(query) && !reporterText.includes(query) && !fullBylineText.includes(query)) {
                     continue;
                 }
@@ -476,7 +496,9 @@ function render() {
                 return b.commentCount - a.commentCount;
             } else if (filterVal === 'oldest') {
                 return timeA - timeB;
-            } else { // 'alltime' (default) or 'latest'
+            } else if (filterVal === 'latest') {
+                return timeB - timeA;
+            } else { // 'alltime' (default)
                 return timeB - timeA;
             }
         });
@@ -494,7 +516,6 @@ function render() {
             const art = document.createElement('article');
             art.className = 'news-item';
 
-            // Delete button (own posts only; Admin can delete all)
             let delBtn = '';
             if (isJournalistPage) {
                 if (canDelete(item)) {
