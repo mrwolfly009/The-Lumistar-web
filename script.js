@@ -24,7 +24,7 @@ function lumiStorageGet(k) {
 const currentUser = lumiStorageGet('currentUser') || 'Anonymous';
 const journalistRole = lumiStorageGet('journalistRole') || 'junior';
 const lumiRole = lumiStorageGet('userRole') || '';
-const lumiUserKey = lumiStorageGet('currentUserKey') || currentUser.replace(/[.#$\[\]\/]/g, '_');
+const lumiUserKey = lumiStorageGet('currentUserKey`') || currentUser.replace(/[.#$\[\]\/]/g, '_');
 
 const LUMI_LIMITS = { title: 200, content: 10000, comment: 500, reply: 300, breaking: 200, byline: 40 };
 
@@ -381,7 +381,6 @@ function restoreUiState(state) {
         const el = document.getElementById(id);
         if (el) el.style.display = 'block';
     });
-    // comment-input বা reply-input ছাড়া শুধু অন্য কোনো ইনপুট থাকলে তা রিস্টোর করবে
     Object.keys(state.inputs).forEach(function (id) {
         if (!id.startsWith('comment-input-') && !id.startsWith('reply-input-')) {
             const el = document.getElementById(id);
@@ -394,12 +393,23 @@ function restoreUiState(state) {
     }
 }
 
-// 4. Main Render Function
+// Global Search & Filter handler trigger
+function handleSearchFilter() {
+    render();
+}
+
+// 4. Main Render Function with Search & Filter
 function render() {
     const feed = document.getElementById('newsFeed');
     if (!feed) return;
 
     const isJournalistPage = !!document.getElementById('tInput');
+
+    const searchInput = document.getElementById('searchInput');
+    const filterSelect = document.getElementById('filterSelect');
+    
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    const filterVal = filterSelect ? filterSelect.value : 'alltime';
 
     db.ref('news_portal').on('value', function (snapshot) {
         const data = snapshot.val();
@@ -409,7 +419,6 @@ function render() {
             return;
         }
 
-        const newsMap = {};
         const currentList = [];
 
         for (let key in data) {
@@ -424,40 +433,61 @@ function render() {
                 });
             }
 
-            const newsItem = Object.assign({ id: key }, itemData, { upVotes: upCount, downVotes: downCount });
-            newsMap[key] = newsItem;
+            const commentsObj = itemData.comments || {};
+            const commentCount = Object.keys(commentsObj).length;
+
+            const newsItem = Object.assign({ id: key }, itemData, { 
+                upVotes: upCount, 
+                downVotes: downCount,
+                commentCount: commentCount
+            });
+
+        // --- SEARCH FILTERING ---
+            if (query) {
+                const titleText = (newsItem.title || '').toLowerCase();
+                const contentText = (newsItem.content || '').toLowerCase();
+                const reporterText = (newsItem.reporter || '').toLowerCase();
+                const fullBylineText = ('reported by ' + reporterText).toLowerCase();
+
+                // Headline, content, ba reporter name (ba "reported by name") match korle show korbe
+                if (!titleText.includes(query) && !contentText.includes(query) && !reporterText.includes(query) && !fullBylineText.includes(query)) {
+                    continue;
+                }
+            }
+
             currentList.push(newsItem);
         }
 
-        // Re-sort only when the set of news changed
-        const sameKeys = sortedNewsKeys.length === currentList.length &&
-            sortedNewsKeys.every(function (k) { return !!newsMap[k]; });
-
-        if (!sameKeys) {
-            const ONE_DAY = 24 * 60 * 60 * 1000;
-            const now = Date.now();
-
-            currentList.sort(function (a, b) {
-                const timeA = a.timestamp || 0;
-                const timeB = b.timestamp || 0;
-                const isNewA = (now - timeA) < ONE_DAY;
-                const isNewB = (now - timeB) < ONE_DAY;
-
-                if (isNewA && isNewB) return timeB - timeA;
-                if (isNewA && !isNewB) return -1;
-                if (!isNewA && isNewB) return 1;
-                if (b.upVotes !== a.upVotes) return b.upVotes - a.upVotes;
-                return timeB - timeA;
-            });
-
-            sortedNewsKeys = currentList.map(function (item) { return item.id; });
+        if (currentList.length === 0) {
+            feed.innerHTML = '<p style="text-align:center; padding: 20px; font-style: italic;">No matching news found.</p>';
+            return;
         }
+
+        // --- SORTING FILTER ---
+        currentList.sort(function (a, b) {
+            const timeA = a.timestamp || 0;
+            const timeB = b.timestamp || 0;
+
+            if (filterVal === 'upvotes') {
+                return b.upVotes - a.upVotes;
+            } else if (filterVal === 'downvotes') {
+                return b.downVotes - a.downVotes;
+            } else if (filterVal === 'commented') {
+                return b.commentCount - a.commentCount;
+            } else if (filterVal === 'oldest') {
+                return timeA - timeB;
+            } else { // 'alltime' (default) or 'latest'
+                return timeB - timeA;
+            }
+        });
+
+        sortedNewsKeys = currentList.map(function (item) { return item.id; });
 
         const uiState = captureUiState();
         feed.innerHTML = '';
 
         sortedNewsKeys.forEach(function (id) {
-            const item = newsMap[id];
+            const item = currentList.find(function(x) { return x.id === id; });
             if (!item) return;
 
             const safeId = escapeHtml(item.id);
@@ -601,7 +631,6 @@ function addComment(newsId) {
     const inputField = document.getElementById('comment-input-' + newsId);
     if (!inputField) return;
 
-    // Guest ba Anonymous hole ekhane-i block kore debe
     if (!currentUser || currentUser === 'Anonymous' || currentUser === 'Guest' || lumiRole === 'guest') {
         alert("Comment korte prothome login koro!");
         window.location.href = "login.html";
@@ -662,7 +691,6 @@ function addReply(newsId, commentId) {
     });
 }
 
-
 // Protected Delete: own posts only (Admin can delete all)
 function del(id) {
     db.ref('news_portal/' + id).once('value').then(function (snapshot) {
@@ -719,7 +747,7 @@ function listenBreaking() {
     db.ref('breakingNews').on('value', function (snapshot) {
         const data = snapshot.val();
         if (data && data.text) {
-            marquee.innerText = '*** ' + String(data.text) + ' ***'; // .toUpperCase() ti hatai dewa holo
+            marquee.innerText = '*** ' + String(data.text) + ' ***';
         } else {
             marquee.innerText = "*** THE LUMISTAR: আহামরি সব আজাইরা News এখন আপনার চোখের সামনে  ***";
         }
