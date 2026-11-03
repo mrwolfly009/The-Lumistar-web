@@ -497,7 +497,7 @@ function render() {
 
             art.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h2 style="margin:0; font-family:serif; text-transform: uppercase;">${escapeHtml(item.title)}</h2>
+                    <h2 style="margin:0; font-family:serif;">${escapeHtml(item.title)}</h2>
                     ${delBtn}
                 </div>
                 <p style="text-align:right; font-size:0.8rem; margin:5px 0; font-style: italic;">Pub: ${escapeHtml(item.date || '')}</p>
@@ -578,8 +578,9 @@ function toggleCommentSection(newsId) {
 }
 
 function voteNews(newsId, type) {
-    if (!currentUser || currentUser === 'Anonymous' || !lumiUserKey) {
+    if (!currentUser || currentUser === 'Anonymous' || currentUser === 'Guest' || lumiRole === 'guest') {
         alert("Vote dite prothome login koro!");
+        window.location.href = "login.html";
         return;
     }
 
@@ -600,8 +601,10 @@ function addComment(newsId) {
     const inputField = document.getElementById('comment-input-' + newsId);
     if (!inputField) return;
 
-    if (!currentUser || currentUser === 'Anonymous') {
+    // Guest ba Anonymous hole ekhane-i block kore debe
+    if (!currentUser || currentUser === 'Anonymous' || currentUser === 'Guest' || lumiRole === 'guest') {
         alert("Comment korte prothome login koro!");
+        window.location.href = "login.html";
         return;
     }
 
@@ -620,7 +623,6 @@ function addComment(newsId) {
         text: commentText,
         timestamp: Date.now()
     }).then(function () {
-        // Fix: Comment successfully sent hobar por input field clear kore dewa holo
         inputField.value = '';
     }).catch(function (err) {
         console.error("Comment error:", err);
@@ -632,8 +634,9 @@ function addReply(newsId, commentId) {
     const inputField = document.getElementById('reply-input-' + commentId);
     if (!inputField) return;
 
-    if (!currentUser || currentUser === 'Anonymous') {
+    if (!currentUser || currentUser === 'Anonymous' || currentUser === 'Guest' || lumiRole === 'guest') {
         alert("Reply korte prothome login koro!");
+        window.location.href = "login.html";
         return;
     }
 
@@ -652,13 +655,13 @@ function addReply(newsId, commentId) {
         text: replyText,
         timestamp: Date.now()
     }).then(function () {
-        // Fix: Reply successfully sent hobar por reply input field clear kore dewa holo
         inputField.value = '';
     }).catch(function (err) {
         console.error("Reply error:", err);
         alert("Reply korte somossa hoyeche!");
     });
 }
+
 
 // Protected Delete: own posts only (Admin can delete all)
 function del(id) {
@@ -716,7 +719,7 @@ function listenBreaking() {
     db.ref('breakingNews').on('value', function (snapshot) {
         const data = snapshot.val();
         if (data && data.text) {
-            marquee.innerText = '*** ' + String(data.text).toUpperCase() + ' ***';
+            marquee.innerText = '*** ' + String(data.text) + ' ***'; // .toUpperCase() ti hatai dewa holo
         } else {
             marquee.innerText = "*** THE LUMISTAR: আহামরি সব আজাইরা News এখন আপনার চোখের সামনে  ***";
         }
