@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Lumistar - Viewer </title>
+    <title>The Lumistar - Viewer Mode</title>
 
     <!-- Hide the page until login is verified -->
     <style>
@@ -58,20 +58,28 @@
         <div class="date-line" id="liveDateDisplay">VOL. XCIV... No. 31,102 — LOADING...</div>
 
       <!-- Search & Filter Bar UI -->
-<div style="display: flex; gap: 8px; margin: 15px 0; align-items: center;">
+<div style="display: flex; gap: 6px; margin: 15px 0; align-items: center; width: 100%; box-sizing: border-box;">
+    <!-- Search Input -->
     <input type="text" id="searchInput" oninput="handleSearchFilter()" placeholder="Search news by keywords..." 
-           style="flex: 1; padding: 8px 12px; border: 1px solid #000; font-family: inherit; font-size: 0.85rem; background: #fff;">
+           style="flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid #000; font-family: inherit; font-size: 0.8rem; background: #fff; box-sizing: border-box;">
     
-    <select id="filterSelect" onchange="handleSearchFilter()" 
-        style="padding: 8px 10px; border: 1px solid #000; font-family: inherit; font-size: 0.85rem; background: #fdfbf7; font-weight: bold; cursor: pointer;">
-    <option value="alltime">★ For You </option>
-    <option value="latest">Date-wise (Latest)</option>
-    <option value="oldest">Date-wise (Oldest)</option>
-    <option value="upvotes">Most Upvotes</option>
-    <option value="downvotes">Most Downvotes</option>
-    <option value="commented">Most Commented</option>
-</select>
+    <!-- Dropdown Container -->
+    <div style="position: relative; flex-shrink: 0; width: 125px; box-sizing: border-box;">
+        <button type="button" onclick="openCustomDropdown(event)" id="filterBtn"
+                style="width: 100%; padding: 8px 6px; border: 1px solid #000; font-family: inherit; font-size: 0.75rem; background: #fdfbf7; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 4px; box-sizing: border-box;">
+            <span id="filterBtnText" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">★ For You</span> <i class="fa-solid fa-chevron-down" style="font-size: 0.6rem;"></i>
+        </button>
 
+        <!-- Custom Dropdown Options Box (right: 0 dewa thakay page er baire jabe na) -->
+        <div id="customDropdownList" style="display: none; position: absolute; right: 0; top: 105%; width: 140px; background: #fdfbf7; border: 1px solid #000; box-shadow: 3px 3px 0px rgba(0,0,0,0.8); z-index: 1000; font-family: inherit;">
+            <div onclick="selectFilter('alltime', '★ For You')" style="padding: 7px 8px; cursor: pointer; border-bottom: 1px solid #ddd; font-size: 0.75rem; font-weight: bold;">★ For You</div>
+            <div onclick="selectFilter('latest', 'Date-wise (Latest)')" style="padding: 7px 8px; cursor: pointer; border-bottom: 1px solid #ddd; font-size: 0.75rem;">Date-wise (Latest)</div>
+            <div onclick="selectFilter('oldest', 'Date-wise (Oldest)')" style="padding: 7px 8px; cursor: pointer; border-bottom: 1px solid #ddd; font-size: 0.75rem;">Date-wise (Oldest)</div>
+            <div onclick="selectFilter('upvotes', 'Most Upvotes')" style="padding: 7px 8px; cursor: pointer; border-bottom: 1px solid #ddd; font-size: 0.75rem;">Most Upvotes</div>
+            <div onclick="selectFilter('downvotes', 'Most Downvotes')" style="padding: 7px 8px; cursor: pointer; border-bottom: 1px solid #ddd; font-size: 0.75rem;">Most Downvotes</div>
+            <div onclick="selectFilter('commented', 'Most Commented')" style="padding: 7px 8px; cursor: pointer; font-size: 0.75rem;">Most Commented</div>
+        </div>
+    </div>
 </div>
 
 <!-- Horoscope Navigation Button -->
