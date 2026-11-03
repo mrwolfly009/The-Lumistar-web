@@ -1,153 +1,127 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="auth-pending">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Lumistar - Login Portal</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/jpeg" href="logo.jpg">
-    <style>
-        .login-wrapper {
-            display: flex;
-            flex-direction: column; /* লোগো আর বক্সকে নিচে নিচে (vertical) আনার জন্য */
-            align-items: center;    /* মাঝখানে রাখার জন্য */
-            justify-content: center;
-            min-height: 80vh;
-            padding: 20px;
-        }
+    <title>The Lumistar - Viewer Mode</title>
 
-        .login-box {
-            width: 100%;
-            max-width: 400px;
-            background: #e8e4d9;
-            border: 1px solid #000;
-            padding: 25px;
-            box-sizing: border-box;
-        }
+    <!-- Hide the page until login is verified -->
+    <style>
+        html.auth-pending body { visibility: hidden; }
     </style>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+
+    <!-- Login guard: any logged-in user (viewer or journalist) can stay -->
+    <script src="auth.js"></script>
+    <script>
+        (function () {
+            if (requireLogin()) {
+                document.documentElement.classList.remove('auth-pending');
+            }
+        })();
+    </script>
 </head>
 <body>
 
-<noscript>
-    <p style="text-align:center; padding:20px;">Please enable JavaScript to use The Lumistar.</p>
-</noscript>
-
-<div class="login-wrapper">
-  
-    <!-- Login Box-er baire upore Logo ebong Name -->
-    <div style="text-align: center; margin: 0px 0 0px 0;">
-        <img src="star.png" alt="Star Logo" style="width: 100px; height: 100px; object-fit: contain; border: none; outline: none; background: transparent; display: block; margin: 0 auto 5px auto;">
-        <h1 style="font-family: serif; font-size: 1.6rem; font-weight: bold; text-transform: uppercase; margin: 0; letter-spacing: 1px; color: #000;">
-            THE LUMISTAR NEWS
-        </h1>
+<div class="newspaper-container">
+    <div class="top-info">
+        <span>Mohammadpur,Dhaka-1207</span>
+        <span onclick="logout()" style="cursor:pointer; color:red;">[ EXIT ]</span>
+        <span>ESTD. 2026</span>
     </div>
-    <div class="login-box">
-        <header class="masthead">
-            <h2 style="text-align:center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-top: 0;">NEWSROOM</h2>
-        </header>
 
-        <p style="text-align:center; font-style: italic; font-size: 0.9rem;">Please identify yourself to enter the portal.</p>
+<div id="weather-widget">
+    <span id="temp">--°C</span>
+    <i id="weather-icon-font" class="fa-solid fa-cloud"></i>
+    <span id="condition">Loading...</span>
+</div>
 
-        <div style="margin-bottom: 15px;">
-            <label for="uName" style="font-weight:bold; display:block; margin-bottom:5px;">Name</label>
-            <input type="text" id="uName" placeholder="Enter your name" maxlength="40" autocomplete="username" style="width:100%; padding:10px; border:1px solid #000; box-sizing:border-box;">
-        </div>
+    <header class="masthead">
+        <h1 style="text-align: center; font-size: 3.5rem; margin: 10px 0;">THE LUMISTAR</h1>
 
-        <!-- Password Area (Visible for both Viewer and Journalist) -->
-        <div id="passArea" style="display:block; margin-bottom: 15px;">
-            <label for="uPass" style="font-weight:bold; display:block; margin-bottom:5px;">Password</label>
-            <input type="password" id="uPass" placeholder="••••••••" maxlength="64" autocomplete="current-password" style="width:100%; padding:10px; border:1px solid #000; box-sizing:border-box;">
-        </div>
-
-        <!-- Secret Invitation Code Area (Journalist Only) -->
-        <div id="secretCodeArea" style="display:none; margin-bottom: 15px;">
-            <label for="uSecretCode" style="font-weight:bold; display:block; margin-bottom:5px; color: #d97706;">Secret Journalist Code</label>
-            <input type="password" id="uSecretCode" placeholder="Enter secret code" maxlength="64" autocomplete="off" style="width:100%; padding:10px; border:1px dashed #d97706; box-sizing:border-box; background: #fffbeb;">
-        </div>
-
-        <div style="border: 1px dashed #000; padding: 12px; margin-bottom: 20px; text-align:center; background: rgba(0,0,0,0.05);">
-            <label style="cursor:pointer;">
-                <input type="radio" name="role" id="vRadio" checked onclick="togglePass(false)"> Viewer
-            </label>
-            <label style="cursor:pointer; margin-left:25px;">
-                <input type="radio" name="role" id="jRadio" onclick="togglePass(true)"> Journalist
-            </label>
-        </div>
-
-        <div style="display: flex; gap: 10px; flex-direction: column; margin-top: 10px;">
-            <div style="display: flex; gap: 10px;">
-                <button type="button" onclick="handleAuth('login')" style="flex:1; background:#000; color:#fff; padding:12px; cursor:pointer; font-weight:bold; border:none; text-transform:uppercase;">LOGIN</button>
-                <button type="button" onclick="handleAuth('register')" style="flex:1; background:#fff; color:#000; border:1px solid #000; padding:12px; cursor:pointer; font-weight:bold; text-transform:uppercase;">REGISTER</button>
+        <!-- Rotating Ads Banner with External Top-Right Countdown -->
+        <div style="width: 100%; margin: 15px 0; position: relative;">
+            <!-- Countdown Box (Outside & Top-Right of the ad box) -->
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 0;">
+                <span id="adCountdown" style="background: #000; color: #fff; font-size: 0.7rem; padding: 2px 8px; font-family: monospace; font-weight: bold; border-radius: 3px 3px 0 0; border: 1px solid #000; border-bottom: none;">15s</span>
             </div>
 
-            <!-- EXIT button-er jaigay ei button-ti bosaben -->
-<button type="button" onclick="enterAsGuest()" style="width:100%; background:transparent; color:#000; border:1px solid #000; padding:8px; cursor:pointer; font-size: 0.8rem; font-weight:bold; text-transform:uppercase;">
-    ENTER AS GUEST
-</button>
-
+            <!-- Ad Box -->
+            <div id="adBannerContainer" style="margin: 0; border: 1px solid #000; background: #fdfbf7; padding: 10px; text-align: center; box-shadow: 2px 2px 0px rgba(0,0,0,0.8); display: none;">
+                <div id="adContentWrapper"></div>
+            </div>
         </div>
 
-        <p style="text-align:center; font-size: 0.7rem; margin-top: 15px; color: #555;">
-            * Journalist access is restricted to authorized personnel only.
-        </p>
+        <div class="date-line" id="liveDateDisplay">VOL. XCIV... No. 31,102 — LOADING...</div>
+
+<!-- Horoscope Navigation Button -->
+<div style="text-align: center; margin: 8px 0 15px 0; font-family: serif;">
+    <a href="horoscope.html" style="font-size: 0.8rem; font-weight: bold; color: #000; text-decoration: none; background: #f2e9d2; border: 1px solid #000; padding: 4px 12px; display: inline-block; box-shadow: 2px 2px 0px rgba(0,0,0,0.8); text-transform: uppercase;">
+        ★ Read Daily Horoscope (রাশিফল) ★
+    </a>
+</div>
+
+    </header>
+
+<main id="newsFeed">
+    <div class="skeleton-card">
+        <div class="skeleton-image"></div>
+        <div class="skeleton-text title"></div>
+        <div class="skeleton-text desc"></div>
+    </div>
+    <div class="skeleton-card">
+        <div class="skeleton-image"></div>
+        <div class="skeleton-text title"></div>
+        <div class="skeleton-text desc"></div>
+    </div>
+    <div class="skeleton-card">
+        <div class="skeleton-image"></div>
+        <div class="skeleton-text title"></div>
+        <div class="skeleton-text desc"></div>
+    </div>
+</main>
+
+    <footer style="margin-top: 50px; text-align: center; border-top: 1px solid #000; padding-top: 20px;">
+        <div style="font-size: 0.8rem; margin-bottom: 10px;">
+            ABOUT US | CONTACT | PRIVACY POLICY | ARCHIVE
+        </div>
+        <h2 style="font-family: serif; margin: 0; font-size: 1.8rem;">The Lumistar</h2>
+        <p style="font-size: 0.75rem; margin: 5px 0;">© 2026 THE LUMISTAR MEDIA GROUP. ALL RIGHTS RESERVED.</p>
+        <p style="font-style: italic; font-size: 0.8rem;">"Truth, Transparency, and the Digital Age"</p>
+        <div style="letter-spacing: 5px; font-size: 0.9rem; margin-top: 10px;">f | t | i | y</div>
+    </footer>
+</div>
+
+<div class="bottom-ui">
+    <div id="clock1" class="green-clock">--- CONNECTING ---</div>
+    <div class="breaking-news-container">
+        <div class="breaking-label">TOP   NEWS</div>
+        <marquee behavior="scroll" direction="left" scrollamount="3">
+            *** THE LUMISTAR: আহামরি সব আজাইরা News এখন আপনার চোখের সামনে  ***
+        </marquee>
     </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
+<!-- auth.js is already loaded in <head>, so only script.js here -->
+<script src="script.js"></script>
+
+<!-- Live date -->
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyDqU6HHGHAO3nrEwMQ0WEMMCtQeikMhgUw",
-    authDomain: "the-lumistar-web.firebaseapp.com",
-    databaseURL: "https://the-lumistar-web-default-rtdb.firebaseio.com/",
-    projectId: "the-lumistar-web",
-    storageBucket: "the-lumistar-web.firebasestorage.app",
-    messagingSenderId: "343793935025",
-    appId: "1:343793935025:web:fd92cd889c72f8ebb17890"
-  };
-
-  if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-  }
-</script>
-
-<script src="auth.js"></script>
-
-<script>
-    function togglePass(show) {
-        const passArea = document.getElementById('passArea');
-        const secretCodeArea = document.getElementById('secretCodeArea');
-
-        // Viewer ba Journalist je-i hok, passArea ekhon shob shomoy visible thakbe
-        if (passArea) passArea.style.display = 'block';
-        if (secretCodeArea) secretCodeArea.style.display = show ? 'block' : 'none';
-    }
-
-    function enterAsGuest() {
-    try {
-        localStorage.setItem('currentUser', 'Guest');
-        localStorage.setItem('currentUserKey', 'guest_user');
-        localStorage.setItem('userRole', 'guest');
-        localStorage.removeItem('journalistRole');
-    } catch (e) {}
-    window.location.replace("viewer.html");
-}
-
-    // Fix: browser may restore the Journalist radio after refresh/back
-    document.addEventListener('DOMContentLoaded', function () {
-        const j = document.getElementById('jRadio');
-        togglePass(!!(j && j.checked));
-    });
-
-    // Press Enter in a text box to log in
-    document.addEventListener('keydown', function (e) {
-        const t = e.target;
-        if (e.key === 'Enter' && t && t.tagName === 'INPUT' && t.type !== 'radio') {
-            e.preventDefault();
-            if (typeof handleAuth === 'function') handleAuth('login');
+    (function () {
+        var today = new Date();
+        var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        var dateElem = document.getElementById('liveDateDisplay');
+        if (dateElem) {
+            dateElem.innerText = 'VOL. XCIV... No. 31,102 — ' + today.toLocaleDateString('en-US', options).toUpperCase();
         }
-    });
+    })();
 </script>
+
 </body>
 </html>
