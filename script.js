@@ -24,12 +24,14 @@ function lumiStorageGet(k) {
 const currentUser = lumiStorageGet('currentUser') || 'Anonymous';
 const journalistRole = lumiStorageGet('journalistRole') || 'junior';
 const lumiRole = lumiStorageGet('userRole') || '';
-const lumiUserKey = lumiStorageGet('currentUserKey') || currentUser.replace(/[.#$\[\]\/]/g, '_');
+const lumiUserKey = lumiStorageGet('currentUserKey`') || currentUser.replace(/[.#$\[\]\/]/g, '_');
 
-const LUMI_LIMITS = { title: 200, content: 10000, comment: 500, reply: 300, breaking: 200, byline: 40 };
+const LUMI_LIMITS = { title: 200, content: 50000, comment: 500, reply: 300, breaking: 200, byline: 40 };
 
-// Global memory cache to store fixed order between reloads
+// Global memory cache to store raw news data and fixed order between reloads
+let allNewsCache = {};
 let sortedNewsKeys = [];
+let currentFilterVal = 'alltime';
 
 // ---------- Safety helpers ----------
 function escapeHtml(str) {
@@ -127,7 +129,7 @@ function updateClocks() {
     });
 }
 
-// 2. Publish news
+// 2. Publish news (Secured with Database-Level Verification)
 const fileInput = document.getElementById('fileInput');
 if (fileInput) {
     fileInput.onchange = function () {
@@ -146,11 +148,6 @@ function clearFile() {
 }
 
 function publish() {
-    if (lumiRole !== 'journalist') {
-        alert("❌ Shudhu journalist-ra news publish korte pare!");
-        return;
-    }
-
     const t = document.getElementById('tInput').value.trim();
     const iLink = document.getElementById('iInput').value.trim();
     const c = document.getElementById('cInput').value.trim();
@@ -180,18 +177,32 @@ function publish() {
 
     const publishBtn = document.querySelector('button[onclick="publish()"]');
     const originalText = publishBtn ? publishBtn.innerText : "PUBLISH NEWS";
-    setBtn(publishBtn, "PUBLISHING...", true);
+    setBtn(publishBtn, "VERIFYING & PUBLISHING...", true);
 
-    if (f && f.files && f.files[0]) {
-        compressImage(f.files[0], function (base64) {
-            saveToFirebase(byline, t, base64, c, publishBtn, originalText);
-        }, function (reason) {
-            alert("Image-ta porte pari ni (" + reason + "). Abar select koro ba image chhara publish koro.");
+    // Database-level security verification
+    db.ref('users/' + lumiUserKey).once('value').then(function(snapshot) {
+        const userData = snapshot.val();
+        if (!userData || userData.role !== 'journalist') {
+            alert("❌ Database Security Error: Apnar journalist-hisebe news publish korar permission nei!");
             setBtn(publishBtn, originalText, false);
-        });
-    } else {
-        saveToFirebase(byline, t, safeImageUrl(iLink), c, publishBtn, originalText);
-    }
+            return;
+        }
+
+        if (f && f.files && f.files[0]) {
+            compressImage(f.files[0], function (base64) {
+                saveToFirebase(byline, t, base64, c, publishBtn, originalText);
+            }, function (reason) {
+                alert("Image-ta porte pari ni (" + reason + "). Abar select koro ba image chhara publish koro.");
+                setBtn(publishBtn, originalText, false);
+            });
+        } else {
+            saveToFirebase(byline, t, safeImageUrl(iLink), c, publishBtn, originalText);
+        }
+    }).catch(function(err) {
+        console.error("Auth Verification Error:", err);
+        alert("Verification korte somossa hoyeche!");
+        setBtn(publishBtn, originalText, false);
+    });
 }
 
 function saveToFirebase(reporter, title, imgSource, content, btnElement, originalText) {
@@ -218,7 +229,7 @@ function saveToFirebase(reporter, title, imgSource, content, btnElement, origina
     });
 }
 
-// --- ADS UPLOAD (Admin Only) ---
+// --- ADS UPLOAD (Admin Only - Database Secured) ---
 const adFileInput = document.getElementById('adFileInput');
 if (adFileInput) {
     adFileInput.onchange = function () {
@@ -237,11 +248,6 @@ function clearAdFile() {
 }
 
 function publishAd() {
-    if (typeof isAdmin !== 'function' || !isAdmin()) {
-        alert("❌ Apnar ad upload korar permission nei! Shudhu Admin parbe.");
-        return;
-    }
-
     const title = document.getElementById('adTitleInput').value.trim();
     const link = document.getElementById('adImageInput').value.trim();
     const f = document.getElementById('adFileInput');
@@ -253,24 +259,38 @@ function publishAd() {
 
     const uploadBtn = document.querySelector('button[onclick="publishAd()"]');
     const originalText = uploadBtn ? uploadBtn.innerText : "UPLOAD AD";
-    setBtn(uploadBtn, "UPLOADING AD...", true);
+    setBtn(uploadBtn, "VERIFYING ADMIN...", true);
 
-    if (f && f.files && f.files[0]) {
-        compressImage(f.files[0], function (base64) {
-            saveAdToFirebase(title, base64, uploadBtn, originalText);
-        }, function (reason) {
-            alert("Ad image-ta porte pari ni (" + reason + "). Onno image dao.");
-            setBtn(uploadBtn, originalText, false);
-        });
-    } else {
-        const safeLink = safeImageUrl(link);
-        if (!safeLink) {
-            alert("Image link ta https:// diye shuru hote hobe!");
+    // Database level check for Admin role
+    db.ref('users/' + lumiUserKey).once('value').then(function(snapshot) {
+        const userData = snapshot.val();
+        if (!userData || userData.role !== 'journalist' || userData.journalistRole !== 'admin') {
+            alert("❌ Database Security Error: Shudhu Admin-i ad upload korte parbe!");
             setBtn(uploadBtn, originalText, false);
             return;
         }
-        saveAdToFirebase(title, safeLink, uploadBtn, originalText);
-    }
+
+        if (f && f.files && f.files[0]) {
+            compressImage(f.files[0], function (base64) {
+                saveAdToFirebase(title, base64, uploadBtn, originalText);
+            }, function (reason) {
+                alert("Ad image-ta porte pari ni (" + reason + "). Onno image dao.");
+                setBtn(uploadBtn, originalText, false);
+            });
+        } else {
+            const safeLink = safeImageUrl(link);
+            if (!safeLink) {
+                alert("Image link ta https:// diye shuru hote hobe!");
+                setBtn(uploadBtn, originalText, false);
+                return;
+            }
+            saveAdToFirebase(title, safeLink, uploadBtn, originalText);
+        }
+    }).catch(function(err) {
+        console.error("Admin Verification Error:", err);
+        alert("Verification-e somossa hoyeche!");
+        setBtn(uploadBtn, originalText, false);
+    });
 }
 
 function saveAdToFirebase(title, imgSrc, btnElement, originalText) {
@@ -391,9 +411,7 @@ function restoreUiState(state) {
     }
 }
 
-// --- Custom Dropdown & Search Handlers ---
-let currentFilterVal = 'alltime';
-
+// --- Custom Dropdown & Search Handlers (Optimized Cache Filter) ---
 function openCustomDropdown(e) {
     if (e) e.stopPropagation();
     const list = document.getElementById('customDropdownList');
@@ -414,207 +432,212 @@ function selectFilter(val, label) {
     const list = document.getElementById('customDropdownList');
     if (list) list.style.display = 'none';
 
-    render();
+    processAndRenderNews();
 }
 
 function handleSearchFilter() {
-    render();
+    processAndRenderNews();
 }
 
-// 4. Main Render Function with Search & Filter
-function render() {
+// Initial Listener to load cache safely
+function initNewsListener() {
+    db.ref('news_portal').on('value', function (snapshot) {
+        allNewsCache = snapshot.val() || {};
+        processAndRenderNews();
+    });
+}
+
+// 4. Optimized Main Render Function with Cached Search & Filter
+function processAndRenderNews() {
     const feed = document.getElementById('newsFeed');
     if (!feed) return;
 
     const isJournalistPage = !!document.getElementById('tInput');
-
     const searchInput = document.getElementById('searchInput');
     const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
     const filterVal = currentFilterVal;
 
-    db.ref('news_portal').on('value', function (snapshot) {
-        const data = snapshot.val();
-        if (!data) {
-            feed.innerHTML = '<p style="text-align:center; padding: 20px;">No news published yet.</p>';
-            sortedNewsKeys = [];
-            return;
-        }
+    const data = allNewsCache;
+    if (!data || Object.keys(data).length === 0) {
+        feed.innerHTML = '<p style="text-align:center; padding: 20px;">No news published yet.</p>';
+        sortedNewsKeys = [];
+        return;
+    }
 
-        const currentList = [];
+    const currentList = [];
 
-        for (let key in data) {
-            const itemData = data[key];
+    for (let key in data) {
+        const itemData = data[key];
 
-            let upCount = 0;
-            let downCount = 0;
-            if (itemData.votes) {
-                Object.values(itemData.votes).forEach(function (v) {
-                    if (v === 'up') upCount++;
-                    if (v === 'down') downCount++;
-                });
-            }
-
-            const commentsObj = itemData.comments || {};
-            const commentCount = Object.keys(commentsObj).length;
-
-            const newsItem = Object.assign({ id: key }, itemData, { 
-                upVotes: upCount, 
-                downVotes: downCount,
-                commentCount: commentCount
+        let upCount = 0;
+        let downCount = 0;
+        if (itemData.votes) {
+            Object.values(itemData.votes).forEach(function (v) {
+                if (v === 'up') upCount++;
+                if (v === 'down') downCount++;
             });
-
-            // --- SEARCH FILTERING ---
-            if (query) {
-                const titleText = (newsItem.title || '').toLowerCase();
-                const contentText = (newsItem.content || '').toLowerCase();
-                const reporterText = (newsItem.reporter || '').toLowerCase();
-                const fullBylineText = ('reported by ' + reporterText).toLowerCase();
-
-                if (!titleText.includes(query) && !contentText.includes(query) && !reporterText.includes(query) && !fullBylineText.includes(query)) {
-                    continue;
-                }
-            }
-
-            currentList.push(newsItem);
         }
 
-        if (currentList.length === 0) {
-            feed.innerHTML = '<p style="text-align:center; padding: 20px; font-style: italic;">No matching news found.</p>';
-            return;
-        }
+        const commentsObj = itemData.comments || {};
+        const commentCount = Object.keys(commentsObj).length;
 
-        // --- SORTING FILTER ---
-        currentList.sort(function (a, b) {
-            const timeA = a.timestamp || 0;
-            const timeB = b.timestamp || 0;
-
-            if (filterVal === 'upvotes') {
-                return b.upVotes - a.upVotes;
-            } else if (filterVal === 'downvotes') {
-                return b.downVotes - a.downVotes;
-            } else if (filterVal === 'commented') {
-                return b.commentCount - a.commentCount;
-            } else if (filterVal === 'oldest') {
-                return timeA - timeB;
-            } else if (filterVal === 'latest') {
-                return timeB - timeA;
-            } else { // 'alltime' (default)
-                return timeB - timeA;
-            }
+        const newsItem = Object.assign({ id: key }, itemData, { 
+            upVotes: upCount, 
+            downVotes: downCount,
+            commentCount: commentCount
         });
 
-        sortedNewsKeys = currentList.map(function (item) { return item.id; });
+        // --- SEARCH FILTERING ---
+        if (query) {
+            const titleText = (newsItem.title || '').toLowerCase();
+            const contentText = (newsItem.content || '').toLowerCase();
+            const reporterText = (newsItem.reporter || '').toLowerCase();
+            const fullBylineText = ('reported by ' + reporterText).toLowerCase();
 
-        const uiState = captureUiState();
-        feed.innerHTML = '';
-
-        sortedNewsKeys.forEach(function (id) {
-            const item = currentList.find(function(x) { return x.id === id; });
-            if (!item) return;
-
-            const safeId = escapeHtml(item.id);
-            const art = document.createElement('article');
-            art.className = 'news-item';
-
-            let delBtn = '';
-            if (isJournalistPage) {
-                if (canDelete(item)) {
-                    delBtn = `<button onclick="del('${safeId}')" style="background:none; border:1px solid #000; cursor:pointer; font-weight:bold; color:red;">[X]</button>`;
-                } else {
-                    delBtn = `<span style="font-size:0.7rem; font-style:italic; color:#666;">(Protected)</span>`;
-                }
+            if (!titleText.includes(query) && !contentText.includes(query) && !reporterText.includes(query) && !fullBylineText.includes(query)) {
+                continue;
             }
+        }
 
-            // Drop cap
-            const content = String(item.content || '');
-            let firstLetter = content.charAt(0);
-            let restOfContent = content.slice(1);
-            const banglaKar = /^[\u09BE-\u09CC\u09D7]/;
-            if (restOfContent.length > 0 && banglaKar.test(restOfContent.charAt(0))) {
-                firstLetter += restOfContent.charAt(0);
-                restOfContent = restOfContent.slice(1);
-            }
-            const restHtml = escapeHtml(restOfContent).replace(/\n/g, '<br>');
+        currentList.push(newsItem);
+    }
 
-            const imgSrc = safeImageUrl(item.img);
-            const reporterHtml = item.reporter
-                ? `<div style="text-align: right; font-size: 0.8rem; font-style: italic; font-weight: bold; margin-top: 10px;">-- Reported by ${escapeHtml(item.reporter)}</div>`
-                : '';
+    if (currentList.length === 0) {
+        feed.innerHTML = '<p style="text-align:center; padding: 20px; font-style: italic;">No matching news found.</p>';
+        return;
+    }
 
-            const commentsObj = item.comments || {};
-            const commentsList = Object.keys(commentsObj).map(function (commentId) {
-                return Object.assign({ id: commentId }, commentsObj[commentId]);
-            });
+    // --- SORTING FILTER ---
+    currentList.sort(function (a, b) {
+        const timeA = a.timestamp || 0;
+        const timeB = b.timestamp || 0;
 
-            art.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h2 style="margin:0; font-family:serif;">${escapeHtml(item.title)}</h2>
-                    ${delBtn}
-                </div>
-                <p style="text-align:right; font-size:0.8rem; margin:5px 0; font-style: italic;">Pub: ${escapeHtml(item.date || '')}</p>
-                ${imgSrc ? `<img src="${escapeHtml(imgSrc)}" loading="lazy" style="width:100%; border:1px solid #000; margin:10px 0;">` : ''}
-                <p style="text-align:justify; line-height:1.6; font-size: 1.05rem;">
-                    <span class="drop-cap">${escapeHtml(firstLetter)}</span>${restHtml}
-                </p>
-                ${reporterHtml}
-
-                <div style="display: flex; align-items: center; gap: 10px; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">
-                    <button onclick="voteNews('${safeId}', 'up')" style="background: #e0f2fe; border: 1px solid #0284c7; color: #0284c7; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; align-items: center; gap: 5px;">
-                        ▲ <span>${item.upVotes}</span>
-                    </button>
-                    <button onclick="voteNews('${safeId}', 'down')" style="background: #ffe4e6; border: 1px solid #e11d48; color: #e11d48; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; align-items: center; gap: 5px;">
-                        ▼ <span>${item.downVotes}</span>
-                    </button>
-                    <button onclick="toggleCommentSection('${safeId}')" style="background: #fdfbf7; border: 1px solid #000; color: #000; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; align-items: center; gap: 5px;">
-                        <i class="fa-solid fa-comment"></i> <span>${commentsList.length}</span>
-                    </button>
-                </div>
-
-                <div id="comment-box-${safeId}" style="margin-top: 15px; background: #fdfbf7; padding: 12px; border: 1px solid #000; box-shadow: 2px 2px 0px rgba(0,0,0,0.8); display: none;">
-                    <h4 style="margin: 0 0 10px 0; font-size: 0.85rem; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 5px; font-family: serif;">
-                        <i class="fa-solid fa-comment" style="margin-right: 5px;"></i> COMMENTS (${commentsList.length})
-                    </h4>
-
-                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                        <input type="text" id="comment-input-${safeId}" maxlength="${LUMI_LIMITS.comment}" placeholder="Write a comment as ${escapeHtml(currentUser)}..." style="flex: 1; padding: 6px; border: 1px solid #000; background: #fff; font-size: 0.85rem;">
-                        <button onclick="addComment('${safeId}')" style="background: #000; color: #fff; border: 1px solid #000; padding: 6px 12px; cursor: pointer; font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">SEND</button>
-                    </div>
-
-                    <div style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-                        ${commentsList.length === 0 ? '<p style="font-size:0.8rem; font-style:italic; color:#555; margin:5px 0;">No comments yet. Be the first one!</p>' : ''}
-                        ${commentsList.map(function (c) {
-                            const safeCid = escapeHtml(c.id);
-                            const repliesList = Object.values(c.replies || {});
-                            return `
-                                <div style="background: #fff; border: 1px solid #000; padding: 8px;">
-                                    <strong style="font-size: 0.8rem; color: #000; font-family: serif;">${escapeHtml(c.author)}:</strong>
-                                    <p style="font-size: 0.85rem; color: #222; margin: 4px 0;">${escapeHtml(c.text)}</p>
-
-                                    <div style="margin-left: 15px; margin-top: 6px; display: flex; flex-direction: column; gap: 4px; border-left: 2px solid #ccc; padding-left: 8px;">
-                                        ${repliesList.map(function (r) {
-                                            return `
-                                            <div style="background: #f9f9f9; border: 1px solid #ddd; padding: 4px 6px;">
-                                                <strong style="font-size: 0.75rem; color: #333;">${escapeHtml(r.author)}:</strong>
-                                                <span style="font-size: 0.8rem; color: #444;">${escapeHtml(r.text)}</span>
-                                            </div>`;
-                                        }).join('')}
-                                    </div>
-
-                                    <div style="display: flex; gap: 4px; margin-top: 6px;">
-                                        <input type="text" id="reply-input-${safeCid}" maxlength="${LUMI_LIMITS.reply}" placeholder="Reply to ${escapeHtml(c.author)}..." style="flex: 1; padding: 4px; border: 1px solid #000; background: #fff; font-size: 0.75rem;">
-                                        <button onclick="addReply('${safeId}', '${safeCid}')" style="background: #000; color: #fff; border: 1px solid #000; padding: 4px 8px; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">REPLY</button>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            `;
-            feed.appendChild(art);
-        });
-
-        restoreUiState(uiState);
+        if (filterVal === 'upvotes') {
+            return b.upVotes - a.upVotes;
+        } else if (filterVal === 'downvotes') {
+            return b.downVotes - a.downVotes;
+        } else if (filterVal === 'commented') {
+            return b.commentCount - a.commentCount;
+        } else if (filterVal === 'oldest') {
+            return timeA - timeB;
+        } else if (filterVal === 'latest') {
+            return timeB - timeA;
+        } else { // 'alltime' (default)
+            return timeB - timeA;
+        }
     });
+
+    sortedNewsKeys = currentList.map(function (item) { return item.id; });
+
+    const uiState = captureUiState();
+    feed.innerHTML = '';
+
+    sortedNewsKeys.forEach(function (id) {
+        const item = currentList.find(function(x) { return x.id === id; });
+        if (!item) return;
+
+        const safeId = escapeHtml(item.id);
+        const art = document.createElement('article');
+        art.className = 'news-item';
+
+        let delBtn = '';
+        if (isJournalistPage) {
+            if (canDelete(item)) {
+                delBtn = `<button onclick="del('${safeId}')" style="background:none; border:1px solid #000; cursor:pointer; font-weight:bold; color:red;">[X]</button>`;
+            } else {
+                delBtn = `<span style="font-size:0.7rem; font-style:italic; color:#666;">(Protected)</span>`;
+            }
+        }
+
+        // Drop cap
+        const content = String(item.content || '');
+        let firstLetter = content.charAt(0);
+        let restOfContent = content.slice(1);
+        const banglaKar = /^[\u09BE-\u09CC\u09D7]/;
+        if (restOfContent.length > 0 && banglaKar.test(restOfContent.charAt(0))) {
+            firstLetter += restOfContent.charAt(0);
+            restOfContent = restOfContent.slice(1);
+        }
+        const restHtml = escapeHtml(restOfContent).replace(/\n/g, '<br>');
+
+        const imgSrc = safeImageUrl(item.img);
+        const reporterHtml = item.reporter
+            ? `<div style="text-align: right; font-size: 0.8rem; font-style: italic; font-weight: bold; margin-top: 10px;">-- Reported by ${escapeHtml(item.reporter)}</div>`
+            : '';
+
+        const commentsObj = item.comments || {};
+        const commentsList = Object.keys(commentsObj).map(function (commentId) {
+            return Object.assign({ id: commentId }, commentsObj[commentId]);
+        });
+
+        art.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="margin:0; font-family:serif;">${escapeHtml(item.title)}</h2>
+                ${delBtn}
+            </div>
+            <p style="text-align:right; font-size:0.8rem; margin:5px 0; font-style: italic;">Pub: ${escapeHtml(item.date || '')}</p>
+            ${imgSrc ? `<img src="${escapeHtml(imgSrc)}" loading="lazy" style="width:100%; border:1px solid #000; margin:10px 0;">` : ''}
+            <p style="text-align:justify; line-height:1.6; font-size: 1.05rem;">
+                <span class="drop-cap">${escapeHtml(firstLetter)}</span>${restHtml}
+            </p>
+            ${reporterHtml}
+
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                <button onclick="voteNews('${safeId}', 'up')" style="background: #e0f2fe; border: 1px solid #0284c7; color: #0284c7; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; align-items: center; gap: 5px;">
+                    ▲ <span>${item.upVotes}</span>
+                </button>
+                <button onclick="voteNews('${safeId}', 'down')" style="background: #ffe4e6; border: 1px solid #e11d48; color: #e11d48; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; align-items: center; gap: 5px;">
+                    ▼ <span>${item.downVotes}</span>
+                </button>
+                <button onclick="toggleCommentSection('${safeId}')" style="background: #fdfbf7; border: 1px solid #000; color: #000; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; align-items: center; gap: 5px;">
+                    <i class="fa-solid fa-comment"></i> <span>${commentsList.length}</span>
+                </button>
+            </div>
+
+            <div id="comment-box-${safeId}" style="margin-top: 15px; background: #fdfbf7; padding: 12px; border: 1px solid #000; box-shadow: 2px 2px 0px rgba(0,0,0,0.8); display: none;">
+                <h4 style="margin: 0 0 10px 0; font-size: 0.85rem; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 5px; font-family: serif;">
+                    <i class="fa-solid fa-comment" style="margin-right: 5px;"></i> COMMENTS (${commentsList.length})
+                </h4>
+
+                <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                    <input type="text" id="comment-input-${safeId}" maxlength="${LUMI_LIMITS.comment}" placeholder="Write a comment as ${escapeHtml(currentUser)}..." style="flex: 1; padding: 6px; border: 1px solid #000; background: #fff; font-size: 0.85rem;">
+                    <button onclick="addComment('${safeId}')" style="background: #000; color: #fff; border: 1px solid #000; padding: 6px 12px; cursor: pointer; font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">SEND</button>
+                </div>
+
+                <div style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                    ${commentsList.length === 0 ? '<p style="font-size:0.8rem; font-style:italic; color:#555; margin:5px 0;">No comments yet. Be the first one!</p>' : ''}
+                    ${commentsList.map(function (c) {
+                        const safeCid = escapeHtml(c.id);
+                        const repliesList = Object.values(c.replies || {});
+                        return `
+                            <div style="background: #fff; border: 1px solid #000; padding: 8px;">
+                                <strong style="font-size: 0.8rem; color: #000; font-family: serif;">${escapeHtml(c.author)}:</strong>
+                                <p style="font-size: 0.85rem; color: #222; margin: 4px 0;">${escapeHtml(c.text)}</p>
+
+                                <div style="margin-left: 15px; margin-top: 6px; display: flex; flex-direction: column; gap: 4px; border-left: 2px solid #ccc; padding-left: 8px;">
+                                    ${repliesList.map(function (r) {
+                                        return `
+                                        <div style="background: #f9f9f9; border: 1px solid #ddd; padding: 4px 6px;">
+                                            <strong style="font-size: 0.75rem; color: #333;">${escapeHtml(r.author)}:</strong>
+                                            <span style="font-size: 0.8rem; color: #444;">${escapeHtml(r.text)}</span>
+                                        </div>`;
+                                    }).join('')}
+                                </div>
+
+                                <div style="display: flex; gap: 4px; margin-top: 6px;">
+                                    <input type="text" id="reply-input-${safeCid}" maxlength="${LUMI_LIMITS.reply}" placeholder="Reply to ${escapeHtml(c.author)}..." style="flex: 1; padding: 4px; border: 1px solid #000; background: #fff; font-size: 0.75rem;">
+                                    <button onclick="addReply('${safeId}', '${safeCid}')" style="background: #000; color: #fff; border: 1px solid #000; padding: 4px 8px; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">REPLY</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+        feed.appendChild(art);
+    });
+
+    restoreUiState(uiState);
 }
 
 function toggleCommentSection(newsId) {
@@ -732,13 +755,8 @@ function del(id) {
     });
 }
 
-// Breaking News Update (Admin Only)
+// Breaking News Update (Admin Only - Database Secured)
 function updateBreaking() {
-    if (typeof isAdmin !== 'function' || !isAdmin()) {
-        alert("❌ Apnar breaking news update korar permission nei! Shudhu Admin parbe.");
-        return;
-    }
-
     const text = document.getElementById('breakingInput').value.trim();
     if (!text) {
         alert("Oi! Breaking news text kothay?");
@@ -749,15 +767,27 @@ function updateBreaking() {
         return;
     }
 
-    db.ref('breakingNews').set({
-        text: text,
-        timestamp: Date.now()
-    }).then(function () {
-        alert("Breaking News Updated!");
-        document.getElementById('breakingInput').value = "";
-    }).catch(function (err) {
-        console.error("Breaking error:", err);
-        alert("Breaking news update korte somossa hoyeche!");
+    // Database level check for Admin role before updating breaking news
+    db.ref('users/' + lumiUserKey).once('value').then(function(snapshot) {
+        const userData = snapshot.val();
+        if (!userData || userData.role !== 'journalist' || userData.journalistRole !== 'admin') {
+            alert("❌ Database Security Error: Shudhu Admin-i breaking news update korte parbe!");
+            return;
+        }
+
+        db.ref('breakingNews').set({
+            text: text,
+            timestamp: Date.now()
+        }).then(function () {
+            alert("Breaking News Updated!");
+            document.getElementById('breakingInput').value = "";
+        }).catch(function (err) {
+            console.error("Breaking error:", err);
+            alert("Breaking news update korte somossa hoyeche!");
+        });
+    }).catch(function(err) {
+        console.error("Verification error:", err);
+        alert("Verification-e somossa hoyeche!");
     });
 }
 
@@ -818,7 +848,7 @@ async function getTheWeather() {
 const originalOnload = window.onload;
 window.onload = function () {
     console.log("App Started...");
-    render();
+    initNewsListener(); // Optimized cached listener start
     initAdsRotation();
     updateClocks();
     setInterval(updateClocks, 1000);
