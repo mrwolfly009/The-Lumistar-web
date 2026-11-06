@@ -9,17 +9,22 @@
     <style>
         html.auth-pending body { visibility: hidden; }
     </style>
-
+    
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/jpeg" href="logo.jpg">
 
-    <!-- Login guard: only logged-in journalists can stay on this page -->
+    <!-- 1. Shobar age Firebase SDK gulo Head-er bhitor load koraben -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <!-- 2. Tarpor auth.js load hobe -->
     <script src="auth.js"></script>
+    
     <script>
         (function () {
-            if (requireLogin(['journalist'])) {
-                document.documentElement.classList.remove('auth-pending');
+            if (requireLogin()) {
+                document.documentElement.classList.remove("auth-pending");
             }
         })();
     </script>
@@ -111,6 +116,13 @@
     <input type="file" id="fileInput" accept="image/*" style="margin-bottom:0;">
     <button id="cancelImg" onclick="clearFile()" style="display:none; background:red; color:white; border:none; cursor:pointer; padding:5px 10px; font-weight:bold;">【X】</button>
 </div>
+  
+<!-- Rich Text Toolbar -->
+<div style="margin-bottom: 6px; display: flex; gap: 6px;">
+    <button type="button" onclick="formatText('<u>', '</u>')" style="text-decoration: underline; padding: 4px 10px; cursor: pointer; background: #fdfbf7; border: 1px solid #000; border-radius: 3px;">U</button>
+    <button type="button" onclick="formatText('**', '**')" style="font-weight: bold; padding: 4px 12px; cursor: pointer; background: #fdfbf7; border: 1px solid #000; border-radius: 3px;">B</button>
+    <button type="button" onclick="formatText('*', '*')" style="font-style: italic; padding: 4px 12px; cursor: pointer; background: #fdfbf7; border: 1px solid #000; border-radius: 3px;">I</button>
+</div>
 
     <textarea id="cInput" rows="3" placeholder="News-er details ekhane likho..."></textarea>
     <button onclick="publish()" class="publish-btn">PUBLISH NEWS</button>
@@ -159,9 +171,6 @@
         </marquee>
     </div>
 </div>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <!-- auth.js is already loaded in <head>, so only script.js here -->
 <script src="script.js"></script>
