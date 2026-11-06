@@ -24,7 +24,7 @@ function lumiStorageGet(k) {
 const currentUser = lumiStorageGet('currentUser') || 'Anonymous';
 const journalistRole = lumiStorageGet('journalistRole') || 'junior';
 const lumiRole = lumiStorageGet('userRole') || '';
-const lumiUserKey = lumiStorageGet('currentUserKey`') || currentUser.replace(/[.#$\[\]\/]/g, '_');
+const lumiUserKey = lumiStorageGet('currentUserKey') || currentUser.replace(/[.#$\[\]\/]/g, '_');
 
 const LUMI_LIMITS = { title: 200, content: 50000, comment: 500, reply: 300, breaking: 200, byline: 40 };
 
@@ -372,12 +372,14 @@ function showCurrentAd() {
     `;
 }
 
-// 3. Who can delete a news item?
+// 3. Who can delete a news item? (Fixed & Cleaned)
 function canDelete(item) {
     if (lumiRole !== 'journalist') return false;
-    if (item.authorKey) return canDeleteNews(item.authorKey);
-    if (ADMIN_CAN_DELETE_ALL && isAdmin()) return true;
-    return item.reporter === currentUser;
+    // Admin ba nijer post hole sohojei delete korte parbe
+    if (journalistRole === 'admin' || item.authorKey === lumiUserKey || item.reporter === currentUser) {
+        return true;
+    }
+    return false;
 }
 
 // Keep open comment boxes + typed text when the feed refreshes
@@ -503,7 +505,7 @@ function processAndRenderNews() {
     }
 
     if (currentList.length === 0) {
-        feed.innerHTML = '<p style="text-align:center; padding: 20px; font-style: italic;">No matching news found.</p>';
+        feed.innerHTML = '<p style="text-align:center; padding: 20px; font-style: italic;"></p>';
         return;
     }
 
@@ -549,7 +551,7 @@ function processAndRenderNews() {
             }
         }
 
-        // Drop cap
+        // Drop cap & Markdown parsing combined
         const content = String(item.content || '');
         let firstLetter = content.charAt(0);
         let restOfContent = content.slice(1);
@@ -558,7 +560,7 @@ function processAndRenderNews() {
             firstLetter += restOfContent.charAt(0);
             restOfContent = restOfContent.slice(1);
         }
-        const restHtml = escapeHtml(restOfContent).replace(/\n/g, '<br>');
+        const restHtml = parseMarkdown(restOfContent);
 
         const imgSrc = safeImageUrl(item.img);
         const reporterHtml = item.reporter
@@ -591,6 +593,10 @@ function processAndRenderNews() {
                 </button>
                 <button onclick="toggleCommentSection('${safeId}')" style="background: #fdfbf7; border: 1px solid #000; color: #000; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; align-items: center; gap: 5px;">
                     <i class="fa-solid fa-comment"></i> <span>${commentsList.length}</span>
+                </button>
+                
+                <button onclick="shareArticle('${safeId}', '${escapeHtml(item.title)}')" style="background: #fdfbf7; border: 1px solid #000; color: #000; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; align-items: center; gap: 5px;">
+                    <i class="fa-solid fa-share-nodes"></i> Share
                 </button>
             </div>
 
@@ -735,7 +741,7 @@ function addReply(newsId, commentId) {
     });
 }
 
-// Protected Delete: own posts only (Admin can delete all)
+// Protected Delete: own posts only (Admin can delete all) - FIXED
 function del(id) {
     db.ref('news_portal/' + id).once('value').then(function (snapshot) {
         const post = snapshot.val();
@@ -747,7 +753,12 @@ function del(id) {
         }
 
         if (confirm("Are you sure you want to delete this article?")) {
-            return db.ref('news_portal/' + id).remove();
+            db.ref('news_portal/' + id).remove().then(function() {
+                // Success
+            }).catch(function(err) {
+                console.error("Firebase Remove Error:", err);
+                alert("Delete korte somossa hoyeche!");
+            });
         }
     }).catch(function (err) {
         console.error("Delete error:", err);
@@ -857,3 +868,64 @@ window.onload = function () {
     setInterval(getTheWeather, 30 * 60 * 1000);
     if (originalOnload) originalOnload();
 };
+
+// Share Article Function
+function shareArticle(id, title) {
+    const shareUrl = window.location.origin + window.location.pathname + '#news-' + id;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: title,
+            text: 'The Lumistar এ এই নিউজটি পড়ুন:',
+            url: shareUrl,
+        }).catch(err => console.log('Share error:', err));
+    } else {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            alert("📋 Link Copy Done!");
+        }).catch(err => {
+            console.error('Clipboard error:', err);
+            alert("Link Isn't Copied!");
+        });
+    }
+}
+
+// Rich Text Formatting Helper for Journalists
+function formatText(openTag, closeTag) {
+    const textarea = document.getElementById('cInput');
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+
+    const selectedText = text.substring(start, end) || 'text';
+    const replacement = openTag + selectedText + (closeTag || '');
+
+    textarea.value = text.substring(0, start) + replacement + text.substring(end);
+    textarea.focus();
+    textarea.setSelectionRange(start + openTag.length, start + openTag.length + selectedText.length);
+}
+
+// Simple Markdown to HTML Parser (Underline, Bold, Italic without Quote)
+function parseMarkdown(text) {
+    if (!text) return '';
+  
+    let parsed = String(text);
+    
+    // XSS Protection safe substitution for allowed formatting tags
+    parsed = parsed.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    // Underline: <u>text</u> -> convert back to HTML tags safely
+    parsed = parsed.replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u>$1</u>');
+    
+    // Bold: **text**
+    parsed = parsed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Italic: *text*
+    parsed = parsed.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // Line breaks
+    parsed = parsed.replace(/\n/g, '<br>');
+    
+    return parsed;
+}
