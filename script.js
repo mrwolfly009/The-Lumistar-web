@@ -323,13 +323,23 @@ function updateAdCountdown() {
     if (counterElem) counterElem.innerText = adTimeLeft + 's';
 }
 
+// Fisher-Yates Shuffle Function for Ads Randomization
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
 function initAdsRotation() {
     const bannerContainer = document.getElementById('adBannerContainer');
     if (!bannerContainer) return;
 
     db.ref('portal_ads').on('value', function (snapshot) {
         const data = snapshot.val();
-        adsList = data ? Object.values(data) : [];
+        // প্রতিবার রিফ্রেশ বা ডাটা লোড হওয়ার সময় অ্যাডগুলো র্যান্ডমাইজ হবে
+        adsList = data ? shuffleArray(Object.values(data)) : [];
 
         if (adTimer) { clearInterval(adTimer); adTimer = null; }
 
@@ -338,7 +348,7 @@ function initAdsRotation() {
             return;
         }
 
-        if (currentAdIndex >= adsList.length) currentAdIndex = 0;
+        currentAdIndex = 0;
         bannerContainer.style.display = 'block';
         showCurrentAd();
 
@@ -347,6 +357,12 @@ function initAdsRotation() {
                 adTimeLeft--;
                 if (adTimeLeft <= 0) {
                     currentAdIndex = (currentAdIndex + 1) % adsList.length;
+                    
+                    // একটি সাইকেল সম্পূর্ণ হওয়ার পর (সবগুলো অ্যাড একবার দেখানো শেষ হলে) আবার নতুন করে র্যান্ডমাইজ হবে
+                    if (currentAdIndex === 0) {
+                        shuffleArray(adsList);
+                    }
+                    
                     showCurrentAd();
                 } else {
                     updateAdCountdown();
@@ -928,4 +944,82 @@ function parseMarkdown(text) {
     parsed = parsed.replace(/\n/g, '<br>');
     
     return parsed;
+}
+// --- LUMISTAR MINI RADIO (CUSTOM DROP-UP) ---
+let isRadioPlaying = false;
+let currentStationUrl = "https://stream.zeno.fm/0r0xa792kwzuv";
+
+function toggleStationMenu(e) {
+    if (e) e.stopPropagation();
+    const menu = document.getElementById('stationDropUpList');
+    if (!menu) return;
+    menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
+}
+
+// পেজের অন্য কোথাও ক্লিক করলে মেনুটি অটোমেটিক বন্ধ হয়ে যাবে
+document.addEventListener('click', function() {
+    const menu = document.getElementById('stationDropUpList');
+    if (menu && menu.style.display === 'flex') {
+        menu.style.display = 'none';
+    }
+});
+
+function selectStation(url, name) {
+    currentStationUrl = url;
+    document.getElementById('currentStationName').innerText = name;
+    document.getElementById('stationDropUpList').style.display = 'none';
+
+    const audio = document.getElementById('lumiAudio');
+    const status = document.getElementById('radioStatus');
+    if (!audio) return;
+
+    audio.src = currentStationUrl;
+    if (isRadioPlaying) {
+        status.innerText = "LOADING...";
+        status.style.color = "#facc15";
+        audio.play().then(() => {
+            status.innerText = "ON AIR";
+            status.style.color = "#4ade80";
+        }).catch(() => {
+            status.innerText = "ERROR";
+            status.style.color = "#ef4444";
+        });
+    }
+}
+
+function toggleRadio() {
+    const audio = document.getElementById('lumiAudio');
+    const btn = document.getElementById('radioToggleBtn');
+    const status = document.getElementById('radioStatus');
+
+    if (!audio) return;
+
+    if (!isRadioPlaying) {
+        if (!audio.src) {
+            audio.src = currentStationUrl;
+        }
+        status.innerText = "LOADING...";
+        status.style.color = "#facc15";
+        audio.play().then(() => {
+            isRadioPlaying = true;
+            btn.innerText = "PAUSE";
+            btn.style.background = "#dc2626";
+            btn.style.color = "#fff";
+            status.innerText = "ON AIR";
+            status.style.color = "#4ade80";
+        }).catch(err => {
+            console.error("Radio stream error:", err);
+            status.innerText = "ERROR";
+            status.style.color = "#ef4444";
+            alert("এই স্টেশনটি এখন অফলাইন আছে, অন্য স্টেশন সিলেক্ট করুন।");
+        });
+    } else {
+        audio.pause();
+        isRadioPlaying = false;
+        btn.innerText = "▶ PLAY";
+        btn.style.background = "#f4ecd8";
+        btn.style.color = "#000";
+        status.innerText = "OFF";
+        status.style.color = "#aaa";
+    }
 }
