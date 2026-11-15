@@ -4,22 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Lumistar - Viewer Mode</title>
-
+    
     <!-- Hide the page until login is verified -->
     <style>
         html.auth-pending body { visibility: hidden; }
     </style>
-
+    
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/jpeg" href="logo.jpg">
 
-    <!-- Login guard: any logged-in user (viewer or journalist) can stay -->
+    <!-- 1. Shobar age Firebase SDK gulo Head-er bhitor load koraben -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <!-- 2. Tarpor auth.js load hobe -->
     <script src="auth.js"></script>
+    
     <script>
         (function () {
             if (requireLogin()) {
-                document.documentElement.classList.remove('auth-pending');
+                document.documentElement.classList.remove("auth-pending");
             }
         })();
     </script>
@@ -119,6 +124,51 @@
         <div style="letter-spacing: 5px; font-size: 0.9rem; margin-top: 10px;">f | t | i | y</div>
     </footer>
 </div>
+  
+<!-- Vintage Mini Radio Bar with Custom Drop-Up -->
+<div id="lumiRadioBar" style="position: fixed; bottom: 56px; left: 0; right: 0; background: #1a1a1a; color: #f4ecd8; border-top: 2px solid #000; padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; z-index: 9998; font-family: monospace; font-size: 0.85rem;">
+    
+    <div style="display: flex; align-items: center; gap: 8px; position: relative;">
+        <span style="background: #dc2626; color: #fff; padding: 2px 5px; font-weight: bold; font-size: 0.7rem; border-radius: 2px;">LIVE FM</span>
+        
+        <!-- Custom Drop-Up Button -->
+        <button id="stationMenuBtn" onclick="toggleStationMenu(event)" style="background: #2b2b2b; color: #f4ecd8; border: 1px solid #666; padding: 4px 8px; font-family: monospace; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 155px;">
+            <span id="currentStationName" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">Lofi Chill Radio</span>
+            <span style="font-size: 0.65rem;">▲</span>
+        </button>
+
+        <!-- Custom Drop-Up Menu List (Opens Upwards) -->
+        <div id="stationDropUpList" style="display: none; position: absolute; bottom: 100%; left: 0; margin-bottom: 8px; background: #1a1a1a; border: 1px solid #f4ecd8; box-shadow: 0 -4px 12px rgba(0,0,0,0.8); min-width: 195px; z-index: 9999; flex-direction: column;">
+            <div onclick="selectStation('https://stream.zeno.fm/0r0xa792kwzuv', 'Lofi Chill Radio')" style="padding: 9px 12px; border-bottom: 1px solid #333; cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">Lofi Chill Radio</div>
+            <div onclick="selectStation('https://icecast.radiofrance.fr/fip-midfi.mp3', 'FIP Vintage Mix')" style="padding: 9px 12px; border-bottom: 1px solid #333; cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">FIP Vintage Mix</div>
+            <div onclick="selectStation('https://stream.zeno.fm/f3wvbbqmdg8uv', 'Classic Jazz FM')" style="padding: 9px 12px; border-bottom: 1px solid #333; cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">Classic Jazz FM</div>
+          <div onclick="selectStation('http://118.179.219.244:8000/;?n=d70ecddb2aebf420177c', 'Dhaka_FM')" style="padding: 9px 12px;border-bottom: 1px solid #333; cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">Dhaka FM</div>
+<div onclick="selectStation('https://radio.mellowbangla.com/stream', 'Mellow FM')" style="padding: 9px 12px; border-bottom: 1px solid #333;cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">Mellow FM</div>
+          <div onclick="selectStation('https://radiofoorti.fm/api/stream', 'Radio Foorti')" style="padding: 9px 12px;border-bottom: 1px solid #333; cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">Radio Foorti</div>
+          <div onclick="selectStation('https://stream-156.zeno.fm/be5bqmk1k18uv?zt=eyJhbGciOiJIUzI1NiJ9.eyJzdHJlYW0iOiJiZTVicW1rMWsxOHV2IiwiaG9zdCI6InN0cmVhbS0xNTYuemVuby5mbSIsInJ0dGwiOjUsImp0aSI6IjB1c0x1ZURGVEhTR0EwSDE1N2VBVmciLCJpYXQiOjE3MzU0NTM5MjQsImV4cCI6MTczNTQ1Mzk4NH0.vjlgqsHzQRt-_2T0LIHscJkAVHXd8hYV8Z6NDvvEWYk', 'Radio Bhumi')" style="padding: 9px 12px;border-bottom: 1px solid #333; cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">Radio Bhumi</div>
+          <div onclick="selectStation('http://139.59.86.99:12496/stream', 'Jago FM')" style="padding: 9px 12px; border-bottom: 1px solid #333;cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">Jago FM</div>
+          <div onclick="selectStation('https://mtv.sunplex.live/Radio-dinraat/tracks-a1/mono.m3u8', 'Radio Din-Raat')" style="padding: 9px 12px; border-bottom: 1px solid #333;cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">Radio Din-Raat</div>
+          <div onclick="selectStation('https://stream.spicefmbd.com/stream.m3u8', 'Spice FM')" style="padding: 9px 12px; border-bottom: 1px solid #333;cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">Spice FM</div>
+          <div onclick="selectStation('http://hdradioclassicrock-rfritschka.radioca.st/;', 'Radio HD-Classic Rock')" style="padding: 9px 12px; border-bottom: 1px solid #333;cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">Radio Classic Rock</div>
+          
+        </div>
+    </div>
+    
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span id="radioStatus" style="font-size: 0.75rem; color: #aaa;">OFF</span>
+        <button id="radioToggleBtn" onclick="toggleRadio()" style="background: #f4ecd8; color: #000; border: 1px solid #000; padding: 3px 10px; font-weight: bold; cursor: pointer; font-family: serif;">▶ PLAY</button>
+    </div>
+    
+    <audio id="lumiAudio" preload="none"></audio>
+</div>
+
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span id="radioStatus" style="font-size: 0.75rem; color: #aaa;">OFF</span>
+        <button id="radioToggleBtn" onclick="toggleRadio()" style="background: #f4ecd8; color: #000; border: 1px solid #000; padding: 3px 10px; font-weight: bold; cursor: pointer; font-family: serif;">▶ PLAY</button>
+    </div>
+    
+    <audio id="lumiAudio" preload="none"></audio>
+</div>
 
 <div class="bottom-ui">
     <div id="clock1" class="green-clock">--- CONNECTING ---</div>
@@ -129,9 +179,6 @@
         </marquee>
     </div>
 </div>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <!-- auth.js is already loaded in <head>, so only script.js here -->
 <script src="script.js"></script>
