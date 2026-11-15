@@ -26,7 +26,7 @@ const journalistRole = lumiStorageGet('journalistRole') || 'junior';
 const lumiRole = lumiStorageGet('userRole') || '';
 const lumiUserKey = lumiStorageGet('currentUserKey') || currentUser.replace(/[.#$\[\]\/]/g, '_');
 
-const LUMI_LIMITS = { title: 200, content: 50000, comment: 500, reply: 300, breaking: 200, byline: 40 };
+const LUMI_LIMITS = { title: 200, content: 50000, comment: 500, reply: 300, breaking: 2000, byline: 40 };
 
 // Global memory cache to store raw news data and fixed order between reloads
 let allNewsCache = {};
