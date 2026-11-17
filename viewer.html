@@ -38,11 +38,20 @@
         <span>ESTD. 2026</span>
     </div>
 
-<div id="weather-widget">
-    <span id="temp">--°C</span>
-    <i id="weather-icon-font" class="fa-solid fa-cloud"></i>
-    <span id="condition">Loading...</span>
-</div>
+    <!-- Header Top: Weather & Feedback Icon with a Single Full-Width Bottom Line -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #000; width: 100%; box-sizing: border-box; font-family: monospace;">
+        <div id="weather-widget" style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem;">
+            <span id="temp">--°C</span>
+            <i id="weather-icon-font" class="fa-solid fa-cloud"></i>
+            <span id="condition">loading...</span>
+        </div>
+        
+        <div>
+            <button onclick="toggleFeedbackModal()" title="Reader Feedback" style="background: transparent; border: none; cursor: pointer; padding: 0; display: flex; align-items: center;" aria-label="Feedback">
+                <i class="fa-solid fa-envelope" style="font-size: 1.4rem; color: #000;"></i>
+            </button>
+        </div>
+    </div>
 
     <header class="masthead">
         <h1 style="text-align: center; font-size: 3.5rem; margin: 10px 0;">THE LUMISTAR</h1>
@@ -75,7 +84,7 @@
             <span id="filterBtnText" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">★ For You</span> <i class="fa-solid fa-chevron-down" style="font-size: 0.6rem;"></i>
         </button>
 
-        <!-- Custom Dropdown Options Box (right: 0 dewa thakay page er baire jabe na) -->
+        <!-- Custom Dropdown Options Box -->
         <div id="customDropdownList" style="display: none; position: absolute; right: 0; top: 105%; width: 140px; background: #fdfbf7; border: 1px solid #000; box-shadow: 3px 3px 0px rgba(0,0,0,0.8); z-index: 1000; font-family: inherit;">
             <div onclick="selectFilter('alltime', '★ For You')" style="padding: 7px 8px; cursor: pointer; border-bottom: 1px solid #ddd; font-size: 0.75rem; font-weight: bold;">★ For You</div>
             <div onclick="selectFilter('latest', 'Date-wise (Latest)')" style="padding: 7px 8px; cursor: pointer; border-bottom: 1px solid #ddd; font-size: 0.75rem;">Date-wise (Latest)</div>
@@ -139,9 +148,9 @@
 
         <!-- Custom Drop-Up Menu List (Opens Upwards) -->
         <div id="stationDropUpList" style="display: none; position: absolute; bottom: 100%; left: 0; margin-bottom: 8px; background: #1a1a1a; border: 1px solid #f4ecd8; box-shadow: 0 -4px 12px rgba(0,0,0,0.8); min-width: 195px; z-index: 9999; flex-direction: column;">
-            <div onclick="selectStation('https://stream.zeno.fm/f3wvbbqmdg8uv', 'Classic Jazz FM')" style="padding: 9px 12px; border-bottom: 1px solid #333; cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">Classic Jazz FM</div>
             <div onclick="selectStation('https://stream.zeno.fm/0r0xa792kwzuv', 'Lofi Chill Radio')" style="padding: 9px 12px; border-bottom: 1px solid #333; cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">Lofi Chill Radio</div>
             <div onclick="selectStation('https://icecast.radiofrance.fr/fip-midfi.mp3', 'FIP Vintage Mix')" style="padding: 9px 12px; border-bottom: 1px solid #333; cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">FIP Vintage Mix</div>
+            <div onclick="selectStation('https://stream.zeno.fm/f3wvbbqmdg8uv', 'Classic Jazz FM')" style="padding: 9px 12px; border-bottom: 1px solid #333; cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">Classic Jazz FM</div>
           <div onclick="selectStation('http://118.179.219.244:8000/;?n=d70ecddb2aebf420177c', 'Dhaka_FM')" style="padding: 9px 12px;border-bottom: 1px solid #333; cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">Dhaka FM</div>
 <div onclick="selectStation('https://radio.mellowbangla.com/stream', 'Mellow FM')" style="padding: 9px 12px; border-bottom: 1px solid #333;cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">Mellow FM</div>
           <div onclick="selectStation('https://radiofoorti.fm/api/stream', 'Radio Foorti')" style="padding: 9px 12px;border-bottom: 1px solid #333; cursor: pointer; color: #f4ecd8; font-size: 0.82rem;">Radio Foorti</div>
@@ -154,14 +163,6 @@
         </div>
     </div>
     
-    <div style="display: flex; align-items: center; gap: 8px;">
-        <span id="radioStatus" style="font-size: 0.75rem; color: #aaa;">OFF</span>
-        <button id="radioToggleBtn" onclick="toggleRadio()" style="background: #f4ecd8; color: #000; border: 1px solid #000; padding: 3px 10px; font-weight: bold; cursor: pointer; font-family: serif;">▶ PLAY</button>
-    </div>
-    
-    <audio id="lumiAudio" preload="none"></audio>
-</div>
-
     <div style="display: flex; align-items: center; gap: 8px;">
         <span id="radioStatus" style="font-size: 0.75rem; color: #aaa;">OFF</span>
         <button id="radioToggleBtn" onclick="toggleRadio()" style="background: #f4ecd8; color: #000; border: 1px solid #000; padding: 3px 10px; font-weight: bold; cursor: pointer; font-family: serif;">▶ PLAY</button>
