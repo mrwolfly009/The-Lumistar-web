@@ -26,7 +26,7 @@ const journalistRole = lumiStorageGet('journalistRole') || 'junior';
 const lumiRole = lumiStorageGet('userRole') || '';
 const lumiUserKey = lumiStorageGet('currentUserKey') || currentUser.replace(/[.#$\[\]\/]/g, '_');
 
-const LUMI_LIMITS = { title: 200, content: 50000, comment: 500, reply: 300, breaking: 2000, byline: 40 };
+const LUMI_LIMITS = { title: 200, content: 50000, comment: 500, reply: 300, breaking: 200, byline: 40 };
 
 // Global memory cache to store raw news data and fixed order between reloads
 let allNewsCache = {};
@@ -1022,4 +1022,173 @@ function toggleRadio() {
         status.innerText = "OFF";
         status.style.color = "#aaa";
     }
+}
+// --- READER FEEDBACK SYSTEM (SECURE & VISIBLE) ---
+function toggleFeedbackModal() {
+    let modal = document.getElementById('feedbackModal');
+    if (!modal) {
+        createFeedbackModal();
+        modal = document.getElementById('feedbackModal');
+    }
+    
+    // মোডাল খোলার সাথে সাথে ডাটাবেজ থেকে ফিডব্যাকগুলো লোড করে দেখাবে
+    if (modal.style.display !== 'flex') {
+        loadFeedbacks();
+        modal.style.display = 'flex';
+    } else {
+        modal.style.display = 'none';
+    }
+}
+
+function createFeedbackModal() {
+    const isJournalist = (lumiRole === 'journalist');
+    
+    const modalHtml = `
+        <div id="feedbackModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10000; justify-content:center; align-items:center; font-family:monospace; box-sizing:border-box; padding: 10px;">
+            <div style="background:#fdfbf7; border:2px solid #000; width:100%; max-width:450px; max-height:85vh; padding:15px; box-shadow:4px 4px 0px rgba(0,0,0,0.8); display:flex; flex-direction:column; box-sizing:border-box;">
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #000; padding-bottom:8px; margin-bottom:12px; flex-shrink:0;">
+                    <h3 style="margin:0; font-family:serif; font-size:1.05rem;"><i class="fa-solid fa-envelope" style="margin-right:6px;"></i> READER FEEDBACK & IDEAS</h3>
+                    <button onclick="toggleFeedbackModal()" style="background:none; border:none; font-weight:bold; font-size:1.2rem; cursor:pointer;">[X]</button>
+                </div>
+
+                <!-- Submission Form -->
+                <div style="margin-bottom:12px; flex-shrink:0;">
+                    <label style="font-size:0.75rem; font-weight:bold; display:block; margin-bottom:4px;">SUBMIT YOUR IDEA/FEEDBACK:</label>
+                    <textarea id="feedbackText" rows="3" placeholder="Write your suggestion here..." style="width:100%; padding:8px; border:1px solid #000; background:#fff; font-family:inherit; font-size:0.8rem; box-sizing:border-box;"></textarea>
+                    <button onclick="submitFeedback()" style="width:100%; margin-top:6px; background:#000; color:#fff; border:1px solid #000; padding:6px; font-weight:bold; cursor:pointer; font-family:serif; text-transform:uppercase; font-size:0.8rem;">SUBMIT FEEDBACK</button>
+                </div>
+
+                <!-- Feedbacks List Container (Visible to all) -->
+                <div style="font-size:0.8rem; font-weight:bold; margin-bottom:4px; text-transform:uppercase; border-top:1px dashed #000; padding-top:8px;">Recent Feedbacks (${isJournalist ? 'Journalist Management Mode' : 'Public View'})</div>
+                <div id="feedbackListContainer" style="overflow-y:auto; flex-grow:1; display:flex; flex-direction:column; gap:8px; max-height:220px; padding-right:2px;">
+                    <p style="font-style:italic; font-size:0.75rem; color:#666; text-align:center;">Loading feedbacks...</p>
+                </div>
+
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function submitFeedback() {
+    // গেস্ট চেক: গেস্ট বা আনলগইনড কেউ ফিডব্যাক দিতে পারবে না
+    if (!currentUser || currentUser === 'Anonymous' || currentUser === 'Guest' || lumiRole === 'guest') {
+        alert("❌ Feedback dite prothome login koro!");
+        window.location.href = "login.html";
+        return;
+    }
+
+    const textInput = document.getElementById('feedbackText');
+    if (!textInput) return;
+    const text = textInput.value.trim();
+
+    if (!text) {
+        alert("Feedback text khali rakha jabe na!");
+        return;
+    }
+
+    db.ref('reader_feedback').push({
+        author: currentUser,
+        authorKey: lumiUserKey,
+        text: text,
+        timestamp: Date.now(),
+        status: 'active' // active or struck
+    }).then(function() {
+        alert("Feedback submitted successfully!");
+        textInput.value = '';
+        loadFeedbacks();
+    }).catch(function(err) {
+        console.error("Feedback error:", err);
+        alert("Feedback submit korte somossa hoyeche.");
+    });
+}
+
+function loadFeedbacks() {
+    const container = document.getElementById('feedbackListContainer');
+    if (!container) return;
+
+    db.ref('reader_feedback').orderByChild('timestamp').once('value').then(function(snapshot) {
+        const data = snapshot.val();
+        if (!data) {
+            container.innerHTML = '<p style="font-style:italic; font-size:0.75rem; color:#666; text-align:center;">No feedback submitted yet.</p>';
+            return;
+        }
+
+        let html = '';
+        const list = [];
+        Object.keys(data).forEach(function(key) {
+            list.push(Object.assign({ id: key }, data[key]));
+        });
+
+        // নতুনগুলো উপরে দেখানোর জন্য সোর্ট
+        list.sort(function(a, b) { return b.timestamp - a.timestamp; });
+
+        const isJournalist = (lumiRole === 'journalist');
+
+        list.forEach(function(item) {
+            const safeId = escapeHtml(item.id);
+            const author = escapeHtml(item.author || 'Anonymous');
+            const text = escapeHtml(item.text || '');
+            const isStruck = item.status === 'struck';
+
+            // পারমিশন চেক:
+            // ১. Strike বাটন শুধু সাংবাদিকরা দেখতে পাবে
+            let strikeBtn = '';
+            if (isJournalist) {
+                strikeBtn = `<button onclick="toggleStrikeFeedback('${safeId}', '${item.status || 'active'}')" style="background:#f2e9d2; border:1px solid #000; font-size:0.65rem; cursor:pointer; padding:2px 6px; font-weight:bold;">${isStruck ? 'UNSTRIKE' : 'STRIKE'}</button>`;
+            }
+
+            // ২. Delete বাটন শুধু তখনই দেখাবে যদি সে সাংবাদিক হয় অথবা ফিডব্যাকটি তার নিজের দেওয়া হয় (অন্যের ফিডব্যাক ডিলিট করতে পারবে না)
+            let deleteBtn = '';
+            if (isJournalist || item.authorKey === lumiUserKey || currentUser === item.author) {
+                deleteBtn = `<button onclick="deleteFeedback('${safeId}')" style="background:#fee2e2; border:1px solid #ef4444; color:#ef4444; font-size:0.65rem; cursor:pointer; padding:2px 6px; font-weight:bold;">DELETE</button>`;
+            }
+
+            let actionBtns = '';
+            if (strikeBtn || deleteBtn) {
+                actionBtns = `
+                    <div style="display:flex; gap:6px; margin-top:4px; justify-content:flex-end;">
+                        ${strikeBtn}
+                        ${deleteBtn}
+                    </div>
+                `;
+            }
+
+            html += `
+                <div style="background:#fff; border:1px solid #000; padding:8px; font-size:0.78rem; box-sizing:border-box;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:3px; margin-bottom:4px;">
+                        <strong style="font-family:serif;">${author}</strong>
+                        <span style="font-size:0.65rem; color:#666;">${new Date(item.timestamp).toLocaleDateString()}</span>
+                    </div>
+                    <p style="margin:4px 0; color:#222; word-break:break-word; ${isStruck ? 'text-decoration:line-through; color:#888;' : ''}">${text}</p>
+                    ${actionBtns}
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }).catch(function(err) {
+        console.error("Load feedback error:", err);
+        container.innerHTML = '<p style="font-size:0.75rem; color:red; text-align:center;">Failed to load feedbacks.</p>';
+    });
+}
+
+function deleteFeedback(id) {
+    if (confirm("Are you sure you want to delete this feedback?")) {
+        db.ref('reader_feedback/' + id).remove().then(function() {
+            loadFeedbacks();
+        }).catch(function(err) {
+            alert("Delete korte somossa hoyeche!");
+        });
+    }
+}
+
+function toggleStrikeFeedback(id, currentStatus) {
+    const newStatus = (currentStatus === 'struck') ? 'active' : 'struck';
+    db.ref('reader_feedback/' + id).update({ status: newStatus }).then(function() {
+        loadFeedbacks();
+    }).catch(function(err) {
+        alert("Update korte somossa hoyeche!");
+    });
 }
