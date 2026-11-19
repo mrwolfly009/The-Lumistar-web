@@ -16,15 +16,117 @@
     <!-- Retro vintage theme (this page only, style.css is not touched) -->
     <style>
         :root { --paper:#efe2c0; --card:#f7edd2; --ink:#2b1d12; --red:#8c2f1b; --gold:#b7852b; --teal:#2f5d5a; }
-        /* Page background, font, container, top bar, title and date line all come from style.css, same as viewer.html */
         body.rt .top-info a { color:#000; text-decoration:none; }
         body.rt .rt-note { text-align:center; font-size:0.75rem; font-style:italic; margin:-10px 0 0; color:#5a4630; }
+
+        /* Controls Bar: Jump Chips + Wit Toggle */
+        body.rt .rt-toolbar {
+            margin-top: 14px;
+            background: var(--card);
+            border: 2px solid var(--ink);
+            padding: 10px;
+            box-shadow: 3px 3px 0 var(--gold);
+        }
+        body.rt .rt-toolbar-top {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px dashed var(--ink);
+        }
+        body.rt .rt-toolbar-title {
+            font-size: 0.78rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        body.rt .rt-btn {
+            background: #efe2c0;
+            color: var(--ink);
+            border: 1px solid var(--ink);
+            padding: 4px 8px;
+            font-size: 0.74rem;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        body.rt .rt-btn:hover, body.rt .rt-btn.active {
+            background: var(--ink);
+            color: #f7edd2;
+        }
+        body.rt .rt-btn.wit-on {
+            background: var(--red);
+            color: #fff;
+            border-color: var(--red);
+        }
+        body.rt .rt-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        body.rt .rt-chip {
+            background: #efe2c0;
+            color: var(--ink);
+            border: 1px solid var(--ink);
+            padding: 3px 7px;
+            font-size: 0.74rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        body.rt .rt-chip.pinned {
+            border-color: var(--red);
+            font-weight: bold;
+        }
+        body.rt .rt-chip.active {
+            background: var(--teal);
+            color: #fff;
+            border-color: var(--teal);
+        }
+
         body.rt .rt-moon { margin-top:16px; background:var(--teal); color:#f3e6c4; border:3px double #f3e6c4; outline:2px solid var(--teal); padding:14px; text-align:center; }
         body.rt .rt-moon .big { font-size:2.6rem; line-height:1; }
         body.rt .rt-moon p { margin:5px 0 0; font-size:0.88rem; line-height:1.45; }
         body.rt .rt-moon .tiny { font-size:0.7rem; opacity:0.8; }
+
         body.rt .rt-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(290px,100%),1fr)); gap:16px; margin-top:20px; }
-        body.rt .rt-card { background:var(--card); border:2px solid var(--ink); outline:1px solid var(--ink); outline-offset:3px; padding:14px; box-shadow:4px 4px 0 var(--gold); margin:3px; }
+        body.rt .rt-card {
+            background:var(--card);
+            border:2px solid var(--ink);
+            outline:1px solid var(--ink);
+            outline-offset:3px;
+            padding:14px;
+            box-shadow:4px 4px 0 var(--gold);
+            margin:3px;
+            display:flex;
+            flex-direction:column;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        body.rt .rt-card.focus-pulse {
+            box-shadow: 0 0 0 3px var(--teal), 4px 4px 0 var(--gold);
+        }
+        body.rt .rt-card.is-pinned {
+            border-color: var(--red);
+            box-shadow: 4px 4px 0 var(--red);
+        }
+        body.rt .rt-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        body.rt .rt-pin-badge {
+            font-size: 0.68rem;
+            font-weight: bold;
+            background: var(--red);
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 2px;
+            letter-spacing: 0.4px;
+        }
         body.rt .rt-card h3 { margin:0; font-size:1.2rem; text-align:center; border-bottom:2px double var(--ink); padding-bottom:6px; }
         body.rt .rt-dates { text-align:center; font-size:0.74rem; font-style:italic; color:#5a4630; margin:5px 0 8px; }
         body.rt .rt-stamp { display:block; width:max-content; max-width:100%; margin:0 auto 10px; border:2px solid var(--red); color:var(--red); padding:3px 10px; transform:rotate(-2deg); font-weight:bold; font-size:0.82rem; text-align:center; }
@@ -33,9 +135,53 @@
         body.rt .rt-lead.neg { border-left-color:var(--red); background:rgba(140,47,27,0.1); }
         body.rt .rt-line { font-size:0.9rem; line-height:1.55; margin:0 0 7px; }
         body.rt .rt-line b { color:var(--teal); }
+        body.rt .rt-wit {
+            display: none;
+            margin: 8px 0 0;
+            padding: 7px 9px;
+            background: rgba(47, 93, 90, 0.12);
+            border-left: 3px solid var(--teal);
+            font-size: 0.84rem;
+            line-height: 1.45;
+            color: var(--ink);
+        }
+        body.rt.show-wit .rt-wit { display: block; }
         body.rt .rt-warn { font-size:0.85rem; line-height:1.5; margin:9px 0 0; padding:6px 8px; border:1px dashed var(--red); color:var(--red); }
         body.rt .rt-lucky { margin-top:10px; padding-top:8px; border-top:2px double var(--ink); display:grid; grid-template-columns:1fr 1fr; gap:4px 10px; font-size:0.8rem; }
+        body.rt .rt-compat {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px dashed rgba(43,29,18,0.35);
+            font-size: 0.78rem;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
         body.rt .rt-dot { display:inline-block; width:13px; height:13px; border-radius:50%; border:1px solid var(--ink); vertical-align:middle; margin-right:4px; }
+        body.rt .rt-card-actions {
+            margin-top: auto;
+            padding-top: 10px;
+            display: flex;
+            gap: 8px;
+            justify-content: space-between;
+        }
+        body.rt .rt-card-actions button {
+            flex: 1;
+            padding: 5px 8px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: 1px solid var(--ink);
+            background: #efe2c0;
+            color: var(--ink);
+            font-family: inherit;
+        }
+        body.rt .rt-card-actions button:hover {
+            background: var(--ink);
+            color: #f7edd2;
+        }
+
         body.rt .rt-foot { margin-top:34px; text-align:center; border-top:4px double var(--ink); padding:12px 0; font-size:0.8rem; }
         body.rt .rt-foot a { color:var(--red); font-weight:bold; }
     </style>
@@ -66,6 +212,17 @@
     <div class="date-line">&#9733; The Daily Astrological Gazette &#9733;</div>
     <p class="rt-note">For entertainment purposes only. The stars are not a substitute for good judgement.</p>
 
+    <section class="rt-toolbar" aria-label="Horoscope controls">
+        <div class="rt-toolbar-top">
+            <span class="rt-toolbar-title">Quick Sign Jump</span>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button type="button" id="showAllBtn" class="rt-btn active">All 12</button>
+                <button type="button" id="witToggleBtn" class="rt-btn">Editorial Wit: OFF</button>
+            </div>
+        </div>
+        <div id="signChips" class="rt-chips"></div>
+    </section>
+
     <section id="moonBox"></section>
 
     <main id="horoscopeGrid" class="rt-grid"></main>
@@ -80,6 +237,9 @@
 
 <script>
 (function () {
+    var PIN_STORAGE_KEY = "lumistar_pinned_zodiac_sign";
+    var WIT_STORAGE_KEY = "lumistar_horoscope_wit";
+
     var signs = [
         { name: "Aries",       symbol: "♈", dates: "Mar 21 – Apr 19" },
         { name: "Taurus",      symbol: "♉", dates: "Apr 20 – May 20" },
@@ -95,8 +255,6 @@
         { name: "Pisces",      symbol: "♓", dates: "Feb 19 – Mar 20" }
     ];
 
-    // Short outlook line shown BEFORE the love section.
-    // Rating 4-5 = positive, 3 = mixed, 1-2 = negative.
     var LEADS = {
         good: [
             "The stars are on your side today. Make the most of it.",
@@ -205,6 +363,15 @@
         }
     };
 
+    var EDITORIAL_WITS = [
+        "Editorial Wit: If plans fail today, blame Mercury—not your alarm clock.",
+        "Editorial Wit: Act confident enough that even your own excuses sound official.",
+        "Editorial Wit: Checking your balance twice will not add zeros, unfortunately.",
+        "Editorial Wit: Greatness awaits, right after one more scroll and a cup of tea.",
+        "Editorial Wit: Diplomacy today means nodding solemnly while thinking of snacks.",
+        "Editorial Wit: Keep calm; dramatic sighs rarely solve spreadsheets or group chats."
+    ];
+
     var CATEGORIES = ["love", "career", "health", "money"];
 
     var CAUTIONS = [
@@ -230,7 +397,9 @@
     var LUCKY_TIMES = ["6 – 8 AM", "8 – 10 AM", "10 AM – 12 PM", "12 – 2 PM", "2 – 4 PM", "4 – 6 PM", "6 – 8 PM", "8 – 10 PM"];
     var DIRECTIONS = ["East", "West", "North", "South", "North-east", "South-west"];
 
-    // Same result for everyone on the same day
+    var cardDataStore = {};
+    var activeFocusSign = null;
+
     function makeRng(seed) {
         var a = seed >>> 0;
         return function () {
@@ -241,14 +410,12 @@
         };
     }
 
-    // Today's date in Bangladesh time
     function getDhakaToday() {
         var s = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
         var p = s.split('-');
         return { y: +p[0], m: +p[1], d: +p[2] };
     }
 
-    // weights = [good, mid, bad]
     var TONE_WEIGHTS = {
         1: [0.05, 0.25, 0.70],
         2: [0.10, 0.40, 0.50],
@@ -264,7 +431,6 @@
         return "bad";
     }
 
-    // ---------- Moon phase (approximate, about +/- 1 day) ----------
     var SYNODIC = 29.530588853;
     var NEW_MOON_REF = Date.UTC(2000, 0, 6, 18, 14);
 
@@ -313,14 +479,44 @@
             '</div>';
     }
 
-    // ---------- Horoscope ----------
-    function buildSign(sign, index, dayNumber) {
+    function getPinnedSign() {
+        try {
+            return localStorage.getItem(PIN_STORAGE_KEY) || "";
+        } catch (e) {
+            return "";
+        }
+    }
+
+    function setPinnedSign(signName) {
+        try {
+            if (signName) {
+                localStorage.setItem(PIN_STORAGE_KEY, signName);
+            } else {
+                localStorage.removeItem(PIN_STORAGE_KEY);
+            }
+        } catch (e) {}
+    }
+
+    function getWitEnabled() {
+        try {
+            return localStorage.getItem(WIT_STORAGE_KEY) === "1";
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function setWitEnabled(enabled) {
+        try {
+            localStorage.setItem(WIT_STORAGE_KEY, enabled ? "1" : "0");
+        } catch (e) {}
+    }
+
+    function buildSign(sign, index, dayNumber, isPinned) {
         var rng = makeRng(dayNumber * 131 + index * 977 + 13);
 
         var ratingBag = [1, 2, 2, 3, 3, 3, 4, 4, 5];
         var rating = ratingBag[Math.floor(rng() * ratingBag.length)];
 
-        // Outlook line that comes before the love section
         var leadTone = rating >= 4 ? "good" : (rating === 3 ? "mid" : "bad");
         var leadPool = LEADS[leadTone];
         var lead = leadPool[(dayNumber + index * 7) % leadPool.length];
@@ -333,23 +529,52 @@
         });
 
         var caution = CAUTIONS[(dayNumber + index * 3) % CAUTIONS.length];
+        var wit = EDITORIAL_WITS[(dayNumber + index * 11) % EDITORIAL_WITS.length];
         var color = COLORS[Math.floor(rng() * COLORS.length)];
         var number = 1 + Math.floor(rng() * 50);
         var time = LUCKY_TIMES[Math.floor(rng() * LUCKY_TIMES.length)];
         var dir = DIRECTIONS[Math.floor(rng() * DIRECTIONS.length)];
 
+        var bestMatch = signs[(index + 4 + (dayNumber % 3)) % signs.length];
+        var clashSign = signs[(index + 6 + (dayNumber % 2)) % signs.length];
+        if (clashSign.name === bestMatch.name) {
+            clashSign = signs[(index + 2) % signs.length];
+        }
+
         var stars = "";
         for (var s = 1; s <= 5; s++) stars += (s <= rating ? "★" : "☆");
 
+        cardDataStore[sign.name] = {
+            name: sign.name,
+            symbol: sign.symbol,
+            mood: MOOD_LABELS[rating],
+            stars: stars,
+            lead: lead,
+            lines: lines,
+            caution: caution,
+            color: color.n,
+            number: number,
+            time: time,
+            dir: dir,
+            bestMatch: bestMatch.name,
+            clashSign: clashSign.name
+        };
+
+        var cardClasses = "rt-card" + (isPinned ? " is-pinned" : "") + (activeFocusSign === sign.name ? " focus-pulse" : "");
+
         return (
-            '<div class="rt-card">' +
+            '<article id="card-' + sign.name + '" class="' + cardClasses + '">' +
+                '<div class="rt-card-top">' +
+                    '<span style="font-size:0.72rem; color:#5a4630;">' + sign.dates + '</span>' +
+                    (isPinned ? '<span class="rt-pin-badge">MY SIGN</span>' : '<span></span>') +
+                '</div>' +
                 '<h3>' + sign.symbol + ' ' + sign.name + '</h3>' +
-                '<p class="rt-dates">' + sign.dates + '</p>' +
                 '<span class="rt-stamp"><span class="st">' + stars + '</span>' + MOOD_LABELS[rating] + '</span>' +
                 '<p class="rt-lead' + (leadTone === "bad" ? ' neg' : '') + '">' + lead + '</p>' +
                 lines.map(function (l) {
                     return '<p class="rt-line"><b>' + l.icon + ' ' + l.label + ':</b> ' + l.text + '</p>';
                 }).join('') +
+                '<div class="rt-wit">' + wit + '</div>' +
                 '<p class="rt-warn"><b>⚠ Caution for today:</b> ' + caution + '</p>' +
                 '<div class="rt-lucky">' +
                     '<div><b>Lucky colour:</b> <span class="rt-dot" style="background:' + color.h + ';"></span>' + color.n + '</div>' +
@@ -357,14 +582,86 @@
                     '<div><b>Lucky time:</b> ' + time + '</div>' +
                     '<div><b>Lucky direction:</b> ' + dir + '</div>' +
                 '</div>' +
-            '</div>'
+                '<div class="rt-compat">' +
+                    '<span><b>Best Match:</b> ' + bestMatch.symbol + ' ' + bestMatch.name + '</span>' +
+                    '<span><b>Clash:</b> ' + clashSign.symbol + ' ' + clashSign.name + '</span>' +
+                '</div>' +
+                '<div class="rt-card-actions">' +
+                    '<button type="button" data-pin="' + sign.name + '">' + (isPinned ? 'Unpin Sign' : 'Pin My Sign') + '</button>' +
+                    '<button type="button" data-copy="' + sign.name + '">Copy Forecast</button>' +
+                '</div>' +
+            '</article>'
         );
+    }
+
+    function renderChips(pinnedSign) {
+        var chipsEl = document.getElementById('signChips');
+        if (!chipsEl) return;
+
+        chipsEl.innerHTML = signs.map(function (s) {
+            var isPinned = (s.name === pinnedSign);
+            var isActive = (s.name === activeFocusSign);
+            var cls = "rt-chip" + (isPinned ? " pinned" : "") + (isActive ? " active" : "");
+            return '<button type="button" class="' + cls + '" data-jump="' + s.name + '">' +
+                s.symbol + ' ' + s.name + (isPinned ? ' ★' : '') +
+            '</button>';
+        }).join('');
+    }
+
+    function copySignForecast(signName, btnEl) {
+        var data = cardDataStore[signName];
+        if (!data) return;
+
+        var text =
+            data.symbol + " " + data.name + " (" + data.stars + " - " + data.mood + ")\n" +
+            data.lead + "\n" +
+            data.lines.map(function (l) { return "- " + l.label + ": " + l.text; }).join("\n") + "\n" +
+            "Caution: " + data.caution + "\n" +
+            "Lucky: " + data.color + " | #" + data.number + " | " + data.time + " | " + data.dir + "\n" +
+            "Best Match: " + data.bestMatch + " | Clash: " + data.clashSign;
+
+        var done = function () {
+            if (!btnEl) return;
+            var old = btnEl.textContent;
+            btnEl.textContent = "Copied!";
+            setTimeout(function () { btnEl.textContent = old; }, 1400);
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(function () {
+                fallbackCopy(text);
+                done();
+            });
+        } else {
+            fallbackCopy(text);
+            done();
+        }
+    }
+
+    function fallbackCopy(str) {
+        var ta = document.createElement('textarea');
+        ta.value = str;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
     }
 
     function loadHoroscope() {
         var grid = document.getElementById('horoscopeGrid');
         var dateTop = document.getElementById('horoscope-date-top');
+        var witBtn = document.getElementById('witToggleBtn');
+        var allBtn = document.getElementById('showAllBtn');
         if (!grid) return;
+
+        var witEnabled = getWitEnabled();
+        document.body.classList.toggle('show-wit', witEnabled);
+        if (witBtn) {
+            witBtn.textContent = "Editorial Wit: " + (witEnabled ? "ON" : "OFF");
+            witBtn.classList.toggle('wit-on', witEnabled);
+        }
 
         var t = getDhakaToday();
         var dayNumber = Math.floor(Date.UTC(t.y, t.m - 1, t.d) / 86400000);
@@ -376,12 +673,81 @@
 
         renderMoon();
 
+        var pinnedSign = getPinnedSign();
+        renderChips(pinnedSign);
+
+        // Put pinned sign first if set
+        var orderedSigns = signs.slice();
+        if (pinnedSign) {
+            orderedSigns.sort(function (a, b) {
+                if (a.name === pinnedSign) return -1;
+                if (b.name === pinnedSign) return 1;
+                return 0;
+            });
+        }
+
         var html = "";
-        signs.forEach(function (sign, index) {
-            html += buildSign(sign, index, dayNumber);
+        orderedSigns.forEach(function (sign) {
+            var origIndex = signs.findIndex(function (s) { return s.name === sign.name; });
+            html += buildSign(sign, origIndex, dayNumber, sign.name === pinnedSign);
         });
         grid.innerHTML = html;
+
+        if (allBtn) {
+            allBtn.classList.toggle('active', !activeFocusSign);
+        }
     }
+
+    document.addEventListener('click', function (e) {
+        var jumpBtn = e.target.closest('[data-jump]');
+        if (jumpBtn) {
+            var targetSign = jumpBtn.getAttribute('data-jump');
+            activeFocusSign = targetSign;
+            renderChips(getPinnedSign());
+
+            document.querySelectorAll('.rt-card').forEach(function (c) {
+                c.classList.remove('focus-pulse');
+            });
+            var allBtn = document.getElementById('showAllBtn');
+            if (allBtn) allBtn.classList.remove('active');
+
+            var cardEl = document.getElementById('card-' + targetSign);
+            if (cardEl) {
+                cardEl.classList.add('focus-pulse');
+                cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return;
+        }
+
+        if (e.target.closest('#showAllBtn')) {
+            activeFocusSign = null;
+            loadHoroscope();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        if (e.target.closest('#witToggleBtn')) {
+            var nextWit = !getWitEnabled();
+            setWitEnabled(nextWit);
+            loadHoroscope();
+            return;
+        }
+
+        var pinBtn = e.target.closest('[data-pin]');
+        if (pinBtn) {
+            var signToPin = pinBtn.getAttribute('data-pin');
+            var currentPinned = getPinnedSign();
+            setPinnedSign(currentPinned === signToPin ? "" : signToPin);
+            activeFocusSign = null;
+            loadHoroscope();
+            return;
+        }
+
+        var copyBtn = e.target.closest('[data-copy]');
+        if (copyBtn) {
+            copySignForecast(copyBtn.getAttribute('data-copy'), copyBtn);
+        }
+    });
 
     document.addEventListener('DOMContentLoaded', loadHoroscope);
 })();
