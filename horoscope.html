@@ -128,8 +128,7 @@
             letter-spacing: 0.4px;
         }
         body.rt .rt-card h3 { margin:0; font-size:1.2rem; text-align:center; border-bottom:2px double var(--ink); padding-bottom:6px; }
-        body.rt .rt-dates { text-align:center; font-size:0.74rem; font-style:italic; color:#5a4630; margin:5px 0 8px; }
-        body.rt .rt-stamp { display:block; width:max-content; max-width:100%; margin:0 auto 10px; border:2px solid var(--red); color:var(--red); padding:3px 10px; transform:rotate(-2deg); font-weight:bold; font-size:0.82rem; text-align:center; }
+        body.rt .rt-stamp { display:block; width:max-content; max-width:100%; margin:8px auto 10px; border:2px solid var(--red); color:var(--red); padding:3px 10px; transform:rotate(-2deg); font-weight:bold; font-size:0.82rem; text-align:center; }
         body.rt .rt-stamp .st { letter-spacing:2px; display:block; font-size:1rem; }
         body.rt .rt-lead { font-size:0.95rem; line-height:1.5; font-style:italic; margin:0 0 10px; padding:6px 8px; border-left:4px solid var(--gold); background:rgba(183,133,43,0.12); }
         body.rt .rt-lead.neg { border-left-color:var(--red); background:rgba(140,47,27,0.1); }
@@ -159,17 +158,50 @@
             gap: 6px;
         }
         body.rt .rt-dot { display:inline-block; width:13px; height:13px; border-radius:50%; border:1px solid var(--ink); vertical-align:middle; margin-right:4px; }
+
+        /* Feature 3: Tomorrow Teaser */
+        body.rt .rt-tomorrow-box {
+            margin-top: 9px;
+            border: 1px solid rgba(43, 29, 18, 0.45);
+            background: rgba(239, 226, 192, 0.65);
+        }
+        body.rt .rt-tomorrow-toggle {
+            width: 100%;
+            background: transparent;
+            border: none;
+            padding: 5px 8px;
+            font-size: 0.76rem;
+            font-weight: bold;
+            color: var(--teal);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: inherit;
+        }
+        body.rt .rt-tomorrow-content {
+            display: none;
+            padding: 6px 8px 8px;
+            border-top: 1px dashed rgba(43, 29, 18, 0.35);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            color: var(--ink);
+        }
+        body.rt .rt-tomorrow-box.open .rt-tomorrow-content {
+            display: block;
+        }
+
         body.rt .rt-card-actions {
             margin-top: auto;
             padding-top: 10px;
             display: flex;
-            gap: 8px;
+            gap: 6px;
             justify-content: space-between;
         }
         body.rt .rt-card-actions button {
             flex: 1;
-            padding: 5px 8px;
-            font-size: 0.75rem;
+            padding: 5px 6px;
+            font-size: 0.72rem;
             font-weight: bold;
             cursor: pointer;
             border: 1px solid var(--ink);
@@ -180,6 +212,116 @@
         body.rt .rt-card-actions button:hover {
             background: var(--ink);
             color: #f7edd2;
+        }
+
+        /* Feature 4: Vintage Pocket Slip Modal */
+        .slip-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(20, 13, 8, 0.78);
+            z-index: 9999;
+            padding: 16px;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+        .slip-overlay.open {
+            display: flex;
+        }
+        .pocket-slip {
+            width: 100%;
+            max-width: 340px;
+            background: #f8efd6;
+            color: #2b1d12;
+            border: 2px dashed #2b1d12;
+            outline: 4px solid #f8efd6;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65);
+            padding: 16px 15px;
+            position: relative;
+            box-sizing: border-box;
+        }
+        .slip-header {
+            text-align: center;
+            border-bottom: 2px double #2b1d12;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+        .slip-header .paper-name {
+            font-size: 0.72rem;
+            letter-spacing: 2px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .slip-header h4 {
+            margin: 3px 0 2px;
+            font-size: 1.3rem;
+        }
+        .slip-header .slip-meta {
+            font-size: 0.72rem;
+            color: #5a4630;
+            font-style: italic;
+        }
+        .slip-stamp {
+            margin: 6px auto 10px;
+            border: 2px solid #8c2f1b;
+            color: #8c2f1b;
+            padding: 3px 10px;
+            font-size: 0.78rem;
+            font-weight: bold;
+            width: max-content;
+            transform: rotate(-1.5deg);
+        }
+        .slip-quote {
+            font-size: 0.88rem;
+            font-style: italic;
+            line-height: 1.45;
+            margin: 0 0 10px;
+            padding: 6px 8px;
+            background: rgba(183, 133, 43, 0.14);
+            border-left: 3px solid #b7852b;
+        }
+        .slip-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px 8px;
+            font-size: 0.76rem;
+            padding: 8px 0;
+            border-top: 1px dashed #2b1d12;
+            border-bottom: 1px dashed #2b1d12;
+        }
+        .slip-caution {
+            margin: 8px 0 0;
+            font-size: 0.76rem;
+            color: #8c2f1b;
+            line-height: 1.4;
+        }
+        .slip-footer {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 0.68rem;
+            color: #5a4630;
+        }
+        .slip-controls {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+        .slip-controls button {
+            flex: 1;
+            padding: 6px 8px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border: 1px solid #2b1d12;
+            background: #efe2c0;
+            color: #2b1d12;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .slip-controls button.close-slip {
+            background: #8c2f1b;
+            color: #fff;
+            border-color: #8c2f1b;
         }
 
         body.rt .rt-foot { margin-top:34px; text-align:center; border-top:4px double var(--ink); padding:12px 0; font-size:0.8rem; }
@@ -233,6 +375,11 @@
         <p style="margin:8px 0 0;"><a href="viewer.html">[ Return to the front page ]</a></p>
     </footer>
 
+</div>
+
+<!-- Pocket Slip Modal -->
+<div id="pocketSlipModal" class="slip-overlay" role="dialog" aria-modal="true" aria-labelledby="slipTitle">
+    <div class="pocket-slip" id="pocketSlipContent"></div>
 </div>
 
 <script>
@@ -399,6 +546,7 @@
 
     var cardDataStore = {};
     var activeFocusSign = null;
+    var formattedIssueDate = "";
 
     function makeRng(seed) {
         var a = seed >>> 0;
@@ -480,35 +628,48 @@
     }
 
     function getPinnedSign() {
-        try {
-            return localStorage.getItem(PIN_STORAGE_KEY) || "";
-        } catch (e) {
-            return "";
-        }
+        try { return localStorage.getItem(PIN_STORAGE_KEY) || ""; } catch (e) { return ""; }
     }
 
     function setPinnedSign(signName) {
         try {
-            if (signName) {
-                localStorage.setItem(PIN_STORAGE_KEY, signName);
-            } else {
-                localStorage.removeItem(PIN_STORAGE_KEY);
-            }
+            if (signName) localStorage.setItem(PIN_STORAGE_KEY, signName);
+            else localStorage.removeItem(PIN_STORAGE_KEY);
         } catch (e) {}
     }
 
     function getWitEnabled() {
-        try {
-            return localStorage.getItem(WIT_STORAGE_KEY) === "1";
-        } catch (e) {
-            return false;
-        }
+        try { return localStorage.getItem(WIT_STORAGE_KEY) === "1"; } catch (e) { return false; }
     }
 
     function setWitEnabled(enabled) {
-        try {
-            localStorage.setItem(WIT_STORAGE_KEY, enabled ? "1" : "0");
-        } catch (e) {}
+        try { localStorage.setItem(WIT_STORAGE_KEY, enabled ? "1" : "0"); } catch (e) {}
+    }
+
+    // Deterministic teaser for tomorrow (dayNumber + 1)
+    function getTomorrowTeaser(index, tomorrowDayNumber) {
+        var tRng = makeRng(tomorrowDayNumber * 131 + index * 977 + 13);
+        var ratingBag = [1, 2, 2, 3, 3, 3, 4, 4, 5];
+        var tRating = ratingBag[Math.floor(tRng() * ratingBag.length)];
+        // Burn 4 category draws so lucky number matches tomorrow's actual seed
+        for (var c = 0; c < 4; c++) tRng();
+        var tColor = COLORS[Math.floor(tRng() * COLORS.length)];
+        var tNumber = 1 + Math.floor(tRng() * 50);
+
+        var tStars = "";
+        for (var s = 1; s <= 5; s++) tStars += (s <= tRating ? "★" : "☆");
+
+        var hint = tRating >= 4
+            ? "Momentum shifts in your favour tomorrow."
+            : (tRating === 3 ? "A balanced pace is expected tomorrow." : "Patience will be tested tomorrow—save your energy.");
+
+        return {
+            stars: tStars,
+            mood: MOOD_LABELS[tRating],
+            number: tNumber,
+            color: tColor.n,
+            hint: hint
+        };
     }
 
     function buildSign(sign, index, dayNumber, isPinned) {
@@ -541,23 +702,27 @@
             clashSign = signs[(index + 2) % signs.length];
         }
 
+        var tomorrow = getTomorrowTeaser(index, dayNumber + 1);
+
         var stars = "";
         for (var s = 1; s <= 5; s++) stars += (s <= rating ? "★" : "☆");
 
         cardDataStore[sign.name] = {
             name: sign.name,
             symbol: sign.symbol,
+            dates: sign.dates,
             mood: MOOD_LABELS[rating],
             stars: stars,
             lead: lead,
             lines: lines,
             caution: caution,
             color: color.n,
+            colorHex: color.h,
             number: number,
             time: time,
             dir: dir,
-            bestMatch: bestMatch.name,
-            clashSign: clashSign.name
+            bestMatch: bestMatch.symbol + " " + bestMatch.name,
+            clashSign: clashSign.symbol + " " + clashSign.name
         };
 
         var cardClasses = "rt-card" + (isPinned ? " is-pinned" : "") + (activeFocusSign === sign.name ? " focus-pulse" : "");
@@ -586,9 +751,21 @@
                     '<span><b>Best Match:</b> ' + bestMatch.symbol + ' ' + bestMatch.name + '</span>' +
                     '<span><b>Clash:</b> ' + clashSign.symbol + ' ' + clashSign.name + '</span>' +
                 '</div>' +
+                '<div class="rt-tomorrow-box">' +
+                    '<button type="button" class="rt-tomorrow-toggle" data-tomorrow="' + sign.name + '">' +
+                        '<span>🔮 Tomorrow\'s Outlook Teaser</span>' +
+                        '<span class="arrow">▾</span>' +
+                    '</button>' +
+                    '<div class="rt-tomorrow-content">' +
+                        '<div><b>Rating:</b> ' + tomorrow.stars + ' (' + tomorrow.mood + ')</div>' +
+                        '<div><b>Hint:</b> ' + tomorrow.hint + '</div>' +
+                        '<div><b>Early Clue:</b> #' + tomorrow.number + ' &middot; ' + tomorrow.color + '</div>' +
+                    '</div>' +
+                '</div>' +
                 '<div class="rt-card-actions">' +
-                    '<button type="button" data-pin="' + sign.name + '">' + (isPinned ? 'Unpin Sign' : 'Pin My Sign') + '</button>' +
-                    '<button type="button" data-copy="' + sign.name + '">Copy Forecast</button>' +
+                    '<button type="button" data-pin="' + sign.name + '">' + (isPinned ? 'Unpin' : 'Pin Sign') + '</button>' +
+                    '<button type="button" data-slip="' + sign.name + '">Pocket Slip</button>' +
+                    '<button type="button" data-copy="' + sign.name + '">Copy</button>' +
                 '</div>' +
             '</article>'
         );
@@ -606,6 +783,43 @@
                 s.symbol + ' ' + s.name + (isPinned ? ' ★' : '') +
             '</button>';
         }).join('');
+    }
+
+    function openPocketSlip(signName) {
+        var data = cardDataStore[signName];
+        var modal = document.getElementById('pocketSlipModal');
+        var content = document.getElementById('pocketSlipContent');
+        if (!data || !modal || !content) return;
+
+        content.innerHTML =
+            '<div class="slip-header">' +
+                '<div class="paper-name">THE LUMISTAR &middot; PRESS SLIP</div>' +
+                '<h4 id="slipTitle">' + data.symbol + ' ' + data.name + '</h4>' +
+                '<div class="slip-meta">' + formattedIssueDate + ' &middot; ' + data.dates + '</div>' +
+            '</div>' +
+            '<div class="slip-stamp">' + data.stars + ' &middot; ' + data.mood.toUpperCase() + '</div>' +
+            '<p class="slip-quote">"' + data.lead + '"</p>' +
+            '<div class="slip-stats">' +
+                '<div><b>Colour:</b> ' + data.color + '</div>' +
+                '<div><b>Number:</b> #' + data.number + '</div>' +
+                '<div><b>Time:</b> ' + data.time + '</div>' +
+                '<div><b>Direction:</b> ' + data.dir + '</div>' +
+                '<div><b>Match:</b> ' + data.bestMatch + '</div>' +
+                '<div><b>Clash:</b> ' + data.clashSign + '</div>' +
+            '</div>' +
+            '<p class="slip-caution"><b>⚠ Note:</b> ' + data.caution + '</p>' +
+            '<div class="slip-footer">Cut &amp; Keep &middot; The Daily Astrological Gazette</div>' +
+            '<div class="slip-controls">' +
+                '<button type="button" data-copy="' + data.name + '">Copy Slip Text</button>' +
+                '<button type="button" class="close-slip" id="closeSlipBtn">Close</button>' +
+            '</div>';
+
+        modal.classList.add('open');
+    }
+
+    function closePocketSlip() {
+        var modal = document.getElementById('pocketSlipModal');
+        if (modal) modal.classList.remove('open');
     }
 
     function copySignForecast(signName, btnEl) {
@@ -666,9 +880,10 @@
         var t = getDhakaToday();
         var dayNumber = Math.floor(Date.UTC(t.y, t.m - 1, t.d) / 86400000);
 
+        var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+        formattedIssueDate = months[t.m - 1] + " " + t.d + ", " + t.y;
         if (dateTop) {
-            var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-            dateTop.textContent = "Issue of " + months[t.m - 1] + " " + t.d + ", " + t.y;
+            dateTop.textContent = "Issue of " + formattedIssueDate;
         }
 
         renderMoon();
@@ -676,7 +891,6 @@
         var pinnedSign = getPinnedSign();
         renderChips(pinnedSign);
 
-        // Put pinned sign first if set
         var orderedSigns = signs.slice();
         if (pinnedSign) {
             orderedSigns.sort(function (a, b) {
@@ -733,6 +947,28 @@
             return;
         }
 
+        var tomorrowBtn = e.target.closest('[data-tomorrow]');
+        if (tomorrowBtn) {
+            var box = tomorrowBtn.closest('.rt-tomorrow-box');
+            if (box) {
+                var isOpen = box.classList.toggle('open');
+                var arrow = tomorrowBtn.querySelector('.arrow');
+                if (arrow) arrow.textContent = isOpen ? "▴" : "▾";
+            }
+            return;
+        }
+
+        var slipBtn = e.target.closest('[data-slip]');
+        if (slipBtn) {
+            openPocketSlip(slipBtn.getAttribute('data-slip'));
+            return;
+        }
+
+        if (e.target.closest('#closeSlipBtn') || e.target.id === 'pocketSlipModal') {
+            closePocketSlip();
+            return;
+        }
+
         var pinBtn = e.target.closest('[data-pin]');
         if (pinBtn) {
             var signToPin = pinBtn.getAttribute('data-pin');
@@ -747,6 +983,10 @@
         if (copyBtn) {
             copySignForecast(copyBtn.getAttribute('data-copy'), copyBtn);
         }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closePocketSlip();
     });
 
     document.addEventListener('DOMContentLoaded', loadHoroscope);
