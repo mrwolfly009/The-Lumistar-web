@@ -357,12 +357,12 @@ function initAdsRotation() {
                 adTimeLeft--;
                 if (adTimeLeft <= 0) {
                     currentAdIndex = (currentAdIndex + 1) % adsList.length;
-                    
+
                     // একটি সাইকেল সম্পূর্ণ হওয়ার পর (সবগুলো অ্যাড একবার দেখানো শেষ হলে) আবার নতুন করে র্যান্ডমাইজ হবে
                     if (currentAdIndex === 0) {
                         shuffleArray(adsList);
                     }
-                    
+
                     showCurrentAd();
                 } else {
                     updateAdCountdown();
@@ -446,7 +446,7 @@ function selectFilter(val, label) {
     currentFilterVal = val;
     const btnText = document.getElementById('filterBtnText');
     if (btnText) btnText.innerText = label;
-    
+
     const list = document.getElementById('customDropdownList');
     if (list) list.style.display = 'none';
 
@@ -499,8 +499,8 @@ function processAndRenderNews() {
         const commentsObj = itemData.comments || {};
         const commentCount = Object.keys(commentsObj).length;
 
-        const newsItem = Object.assign({ id: key }, itemData, { 
-            upVotes: upCount, 
+        const newsItem = Object.assign({ id: key }, itemData, {
+            upVotes: upCount,
             downVotes: downCount,
             commentCount: commentCount
         });
@@ -610,7 +610,7 @@ function processAndRenderNews() {
                 <button onclick="toggleCommentSection('${safeId}')" style="background: #fdfbf7; border: 1px solid #000; color: #000; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; align-items: center; gap: 5px;">
                     <i class="fa-solid fa-comment"></i> <span>${commentsList.length}</span>
                 </button>
-                
+
                 <button onclick="shareArticle('${safeId}', '${escapeHtml(item.title)}')" style="background: #fdfbf7; border: 1px solid #000; color: #000; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; align-items: center; gap: 5px;">
                     <i class="fa-solid fa-share-nodes"></i> Share
                 </button>
@@ -888,7 +888,7 @@ window.onload = function () {
 // Share Article Function
 function shareArticle(id, title) {
     const shareUrl = window.location.origin + window.location.pathname + '#news-' + id;
-    
+
     if (navigator.share) {
         navigator.share({
             title: title,
@@ -925,29 +925,114 @@ function formatText(openTag, closeTag) {
 // Simple Markdown to HTML Parser (Underline, Bold, Italic without Quote)
 function parseMarkdown(text) {
     if (!text) return '';
-  
+
     let parsed = String(text);
-    
+
     // XSS Protection safe substitution for allowed formatting tags
     parsed = parsed.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
     // Underline: <u>text</u> -> convert back to HTML tags safely
     parsed = parsed.replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u>$1</u>');
-    
+
     // Bold: **text**
     parsed = parsed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
+
     // Italic: *text*
     parsed = parsed.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    
+
     // Line breaks
     parsed = parsed.replace(/\n/g, '<br>');
-    
+
     return parsed;
 }
+
 // --- LUMISTAR MINI RADIO (CUSTOM DROP-UP) ---
 let isRadioPlaying = false;
 let currentStationUrl = "https://stream.zeno.fm/0r0xa792kwzuv";
+
+// --- VICE CITY FM (6H 8M 57S / 24H LOOP + LATE-JOIN SYNC) ---
+const VICE_CITY_FM_URL = "https://www.dropbox.com/scl/fi/436hgv9s8hlvwu2evy33n/Vice-City-FM-GTA-6-I-Official-Radio-Station.-yebovl.mp3?rlkey=zd1pkzvstjahmfe5u4bqf1539&st=qjm9f362&raw=1";
+const VICE_CITY_FM_DURATION_SEC = (6 * 3600) + (8 * 60) + 57; // 22137 seconds
+
+let isViceCityFmActive = false;
+
+function getViceCityFmSeekSeconds() {
+    const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" }));
+    const totalSecondsSinceMidnight =
+        (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+    return totalSecondsSinceMidnight % VICE_CITY_FM_DURATION_SEC;
+}
+
+function playViceCityFm() {
+    const audio = document.getElementById('lumiAudio');
+    const status = document.getElementById('radioStatus');
+    const nameElem = document.getElementById('currentStationName');
+    const btn = document.getElementById('radioToggleBtn');
+    if (!audio) return;
+
+    if (nameElem) nameElem.innerText = "Vice City FM";
+    if (status) {
+        status.innerText = "TUNING...";
+        status.style.color = "#facc15";
+    }
+
+    const targetSeek = getViceCityFmSeekSeconds();
+    audio.pause();
+    audio.loop = true;
+    audio.preload = "metadata";
+    audio.src = VICE_CITY_FM_URL;
+
+    audio.onloadedmetadata = function () {
+        const realDuration = (audio.duration && isFinite(audio.duration) && audio.duration > 0)
+            ? audio.duration
+            : VICE_CITY_FM_DURATION_SEC;
+        try {
+            audio.currentTime = targetSeek % realDuration;
+        } catch (e) {
+            console.warn("Seek skipped:", e);
+        }
+        audio.onloadedmetadata = null;
+    };
+
+    audio.onerror = function () {
+        console.error("Vice City FM audio error:", audio.error);
+        isRadioPlaying = false;
+        if (btn) {
+            btn.innerText = "▶ PLAY";
+            btn.style.background = "#f4ecd8";
+            btn.style.color = "#000";
+        }
+        if (status) {
+            status.innerText = "ERROR";
+            status.style.color = "#ef4444";
+        }
+    };
+
+    audio.play().then(() => {
+        isRadioPlaying = true;
+        if (btn) {
+            btn.innerText = "PAUSE";
+            btn.style.background = "#dc2626";
+            btn.style.color = "#fff";
+        }
+        if (status) {
+            status.innerText = "ON AIR";
+            status.style.color = "#4ade80";
+        }
+    }).catch(err => {
+        console.error("Vice City FM play() error:", err && err.name, err && err.message);
+        isRadioPlaying = false;
+        if (btn) {
+            btn.innerText = "▶ PLAY";
+            btn.style.background = "#f4ecd8";
+            btn.style.color = "#000";
+        }
+        if (status) {
+            status.innerText = "ERROR";
+            status.style.color = "#ef4444";
+        }
+    });
+}
 
 function toggleStationMenu(e) {
     if (e) e.stopPropagation();
@@ -965,24 +1050,44 @@ document.addEventListener('click', function() {
 });
 
 function selectStation(url, name) {
+    const nameElem = document.getElementById('currentStationName');
+    const menu = document.getElementById('stationDropUpList');
+    if (nameElem) nameElem.innerText = name;
+    if (menu) menu.style.display = 'none';
+
+    if (url === 'VICE_CITY_FM_6H') {
+        isViceCityFmActive = true;
+        playViceCityFm();
+        return;
+    }
+
+    isViceCityFmActive = false;
     currentStationUrl = url;
-    document.getElementById('currentStationName').innerText = name;
-    document.getElementById('stationDropUpList').style.display = 'none';
 
     const audio = document.getElementById('lumiAudio');
     const status = document.getElementById('radioStatus');
     if (!audio) return;
 
+    audio.loop = false;
+    audio.onloadedmetadata = null;
+    audio.onerror = null;
     audio.src = currentStationUrl;
+
     if (isRadioPlaying) {
-        status.innerText = "LOADING...";
-        status.style.color = "#facc15";
+        if (status) {
+            status.innerText = "LOADING...";
+            status.style.color = "#facc15";
+        }
         audio.play().then(() => {
-            status.innerText = "ON AIR";
-            status.style.color = "#4ade80";
+            if (status) {
+                status.innerText = "ON AIR";
+                status.style.color = "#4ade80";
+            }
         }).catch(() => {
-            status.innerText = "ERROR";
-            status.style.color = "#ef4444";
+            if (status) {
+                status.innerText = "ERROR";
+                status.style.color = "#ef4444";
+            }
         });
     }
 }
@@ -995,34 +1100,52 @@ function toggleRadio() {
     if (!audio) return;
 
     if (!isRadioPlaying) {
+        if (isViceCityFmActive) {
+            playViceCityFm();
+            return;
+        }
+
         if (!audio.src) {
             audio.src = currentStationUrl;
         }
-        status.innerText = "LOADING...";
-        status.style.color = "#facc15";
+        if (status) {
+            status.innerText = "LOADING...";
+            status.style.color = "#facc15";
+        }
         audio.play().then(() => {
             isRadioPlaying = true;
-            btn.innerText = "PAUSE";
-            btn.style.background = "#dc2626";
-            btn.style.color = "#fff";
-            status.innerText = "ON AIR";
-            status.style.color = "#4ade80";
+            if (btn) {
+                btn.innerText = "PAUSE";
+                btn.style.background = "#dc2626";
+                btn.style.color = "#fff";
+            }
+            if (status) {
+                status.innerText = "ON AIR";
+                status.style.color = "#4ade80";
+            }
         }).catch(err => {
             console.error("Radio stream error:", err);
-            status.innerText = "ERROR";
-            status.style.color = "#ef4444";
+            if (status) {
+                status.innerText = "ERROR";
+                status.style.color = "#ef4444";
+            }
             alert("এই স্টেশনটি এখন অফলাইন আছে, অন্য স্টেশন সিলেক্ট করুন।");
         });
     } else {
         audio.pause();
         isRadioPlaying = false;
-        btn.innerText = "▶ PLAY";
-        btn.style.background = "#f4ecd8";
-        btn.style.color = "#000";
-        status.innerText = "OFF";
-        status.style.color = "#aaa";
+        if (btn) {
+            btn.innerText = "▶ PLAY";
+            btn.style.background = "#f4ecd8";
+            btn.style.color = "#000";
+        }
+        if (status) {
+            status.innerText = "OFF";
+            status.style.color = "#aaa";
+        }
     }
 }
+
 // --- READER FEEDBACK SYSTEM (SECURE & VISIBLE) ---
 function toggleFeedbackModal() {
     let modal = document.getElementById('feedbackModal');
@@ -1030,7 +1153,7 @@ function toggleFeedbackModal() {
         createFeedbackModal();
         modal = document.getElementById('feedbackModal');
     }
-    
+
     // মোডাল খোলার সাথে সাথে ডাটাবেজ থেকে ফিডব্যাকগুলো লোড করে দেখাবে
     if (modal.style.display !== 'flex') {
         loadFeedbacks();
@@ -1042,11 +1165,11 @@ function toggleFeedbackModal() {
 
 function createFeedbackModal() {
     const isJournalist = (lumiRole === 'journalist');
-    
+
     const modalHtml = `
         <div id="feedbackModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10000; justify-content:center; align-items:center; font-family:monospace; box-sizing:border-box; padding: 10px;">
             <div style="background:#fdfbf7; border:2px solid #000; width:100%; max-width:450px; max-height:85vh; padding:15px; box-shadow:4px 4px 0px rgba(0,0,0,0.8); display:flex; flex-direction:column; box-sizing:border-box;">
-                
+
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #000; padding-bottom:8px; margin-bottom:12px; flex-shrink:0;">
                     <h3 style="margin:0; font-family:serif; font-size:1.05rem;"><i class="fa-solid fa-envelope" style="margin-right:6px;"></i> READER FEEDBACK & IDEAS</h3>
                     <button onclick="toggleFeedbackModal()" style="background:none; border:none; font-weight:bold; font-size:1.2rem; cursor:pointer;">[X]</button>
